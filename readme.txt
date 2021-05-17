@@ -1,4 +1,5 @@
-���̃v���O�����́AMinecraft�����łɂ����ĊJ������mcfunction�t�@�C����Minecraft Java Edition�ł����p�ł���悤�ɕϊ����邽�߂̃v���O�����̊J�����O�ł��B
-test.py �ϊ��v���O����(�J����)
-convert_test.mcfunction �ϊ��v���O�����Ŏ����ɕϊ�����ׂ̃t�@�C��
-MINECRAFT_BUILD���t�@�C�� ���ۂɕϊ����邽�߂̃t�@�C���̈ꕔ
+このプログラムは、Minecraft統合版において開発したmcfunctionファイルをMinecraft Java Editionでも利用できるように変換するためのプログラムの開発ログです。
+test.py 変換プログラム(開発中)
+convert_test.mcfunction 変換プログラムで試しに変換する為のファイル
+MINECRAFT_BUILD内ファイル 実際に変換するためのファイルの一部
+convert.sh test.pyを開発するための元のアルゴリズム的なもの(bash)
