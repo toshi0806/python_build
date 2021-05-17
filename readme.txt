@@ -1,0 +1,4 @@
+このプログラムは、Minecraft統合版において開発したmcfunctionファイルをMinecraft Java Editionでも利用できるように変換するためのプログラムの開発ログです。
+test.py 変換プログラム(開発中)
+convert_test.mcfunction 変換プログラムで試しに変換する為のファイル
+MINECRAFT_BUILD内ファイル 実際に変換するためのファイルの一部
