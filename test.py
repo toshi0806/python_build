@@ -1,7 +1,6 @@
 import sys
 import os
-from datetime import datetime
-from pytz import timezone
+import datetime
 
 #!dstPath出力パス,srcPath入力パス,srcDir入力ディレクトリ
 suffix = '.mcfunction'
@@ -28,16 +27,14 @@ except:
 finally:
     dstPath = dstPath + suffix
     if dstPath.count('.mcfunction') == 2:
-        dstPath = dstPath.replace('.mcfunction.mcfunction', '.mcfunction')
+        dstPath = dstPath.replace('.mcfunction{2}', '.mcfunction')
 
 # ファイルのディレクトリ
 srcDir = os.path.split(srcPath)[0]
-dstPath=srcDir + "\\" + dstPath
+dstPath=srcDir + "/" + dstPath
 print("出力ファイルパス " + dstPath)
 TestFind = os.path.exists(dstPath)
-if TestFind is False:
-    print("新規にファイルを作成します。\n" + dstPath)
-else:
+if TestFind:
     while True:
         print("既存ファイルを削除しますか？(Y/n)")
         cfmDelete = input()
@@ -48,11 +45,13 @@ else:
             print("ファイルを新規に作成します。")
             os.remove(dstPath)
             break
+else:
+    print("新規にファイルを作成します。\n" + dstPath)
 
 inText = open(dstPath, 'a', encoding='UTF-8')
 # タイムスタンプ取得用
-dateText = datetime.now(timezone('UTC')).astimezone(
-    timezone('Asia/Tokyo')).strftime("%Y/%m/%d %H:%M:%S")
+dt_now = datetime.datetime.now()
+dateText = dt_now.strftime("%Y/%m/%d %H:%M:%S")
 
 inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
