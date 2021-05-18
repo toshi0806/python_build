@@ -30,3 +30,9 @@ execute @a[m=!adventure,scores={test987j9uq34=!7..23}] ~ ~ ~ say 基本羅列変
 
 scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
+
+
+
+
+#test
+#空白行があっても処理でき
