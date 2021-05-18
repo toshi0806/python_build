@@ -31,7 +31,7 @@ finally:
 
 # ファイルのディレクトリ
 srcDir = os.path.split(srcPath)[0]
-dstPath=srcDir + "/" + dstPath
+dstPath = srcDir + "/" + dstPath
 print("出力ファイルパス " + dstPath)
 TestFind = os.path.exists(dstPath)
 if TestFind:
@@ -57,30 +57,24 @@ inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
 
 #!変換の流れ
-#convContinueは「空文字列だったとき次の文字列を読み込み、それが文字列であったとき処理を続行する」判断を行う。
-#これを実行することで空白の次の一行が未処理で続行されることを防ぐ=この場合再読み込みを行わない
-beforeText = open(srcPath, "r", encoding="utf_8")
+textRead = open(srcPath, "r", encoding="utf_8")
+beforeText = textRead.readlines()
+textRead.close()
 print("変換テキストを読み込みました。")
-convContinue = False
-lineText = list(beforeText)
-while True:
-    if convContinue is False:
-        lineText = beforeText.readline()
+for i in range(0, 10000):
+    try:
+        lineText = beforeText[i]
+    except:
+        lineText = ""
 
     print("INPUT-" + lineText)
+
+    #ここに変換するための関数
+
     if lineText:
         print("変換処理を実行します")
-        convContinue = False
     else:
-        lineText = beforeText.readline()
-        if lineText is False:
-            print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
-            print("path:" + srcDir + "filename:" + dstPath + "\nfullPath:" + srcDir + "/" + dstPath)
-            exit()
-        else:
-            print("空文字列を検知")
-            convContinue = True
-            #debug
-            print(lineText)
-            exit()
-#readlineに難がありそう
+        print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
+        print("path : " + srcDir + "  filename : " + dstPath +
+              "\nfullPath : " + srcDir + "/" + dstPath)
+        exit()
