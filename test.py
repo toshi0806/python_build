@@ -1,6 +1,7 @@
 import sys
 import os
 import datetime
+import re
 
 #!dstPath出力パス,srcPath入力パス,srcDir入力ディレクトリ
 suffix = '.mcfunction'
@@ -56,6 +57,59 @@ dateText = dt_now.strftime("%Y/%m/%d %H:%M:%S")
 inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
 
+######################################
+def argument_convert(lineArg,argCnt):
+    lineArg = 'execute @e[type=armor_stand,r=3]'
+    getArg = re.search(r'\@.\[(.+)\]',lineArg)
+    getArg = getArg.group(0)
+    argList = re.findall(r'|')
+    #Untitled-1.py
+    return getArg
+######################################
+def type_convert(cmdType,cmdConv):
+    if cmdType is 1:
+
+
+        result = cmdConv
+    return result
+######################################
+def command_text_convert(cmdLine):
+    #execute以外にも対応させる
+    #startswithは標準ライブラリのメソッドなので
+    if cmdLine.startswith("#"):
+        print("コメント行です。")
+        convType = 0
+    elif cmdLine.startswith("\n"):
+        print("空白行です。")
+        convType = 0
+    elif cmdLine.startswith("execute"):
+        print("executeコマンドです。")
+        convType = 1
+    else:
+        print("コマンド構文自体の変換は必要ありません。")
+        convType = 0
+
+    if cmdLine.startswith("#") == False and re.search('\@', cmdLine):
+        cntSelector = cmdLine.count('@')
+        if re.search('\[', cmdLine):
+            print("このコマンドは引数付きセレクタがあります。")
+            convTypeSlc = True
+        else:
+            print("このコマンドはセレクタがありますが変換は不要です。")
+            convTypeSlc = False
+        #引数はここで変換し、文字列全体を返す。
+        if convTypeSlc:
+            cmdLine = argument_convert(cmdLine,cntSelector)
+
+    if convType >= 1:
+        convResult = type_convert(convType,cmdLine)
+    else:
+        convResult = cmdLine
+
+        #convTypeはこれからパターンが増える
+    return convResult
+######################################
+
 #!変換の流れ
 textRead = open(srcPath, "r", encoding="utf_8")
 beforeText = textRead.readlines()
@@ -67,12 +121,11 @@ for i in range(0, 10000):
     except:
         lineText = ""
 
-    print("INPUT-" + lineText)
-
-    #ここに変換するための関数
-
+    print("\n\nINPUT-" + lineText)
     if lineText:
         print("変換処理を実行します")
+        outText = open(dstPath, 'a', encoding='UTF-8')
+        outText.write(command_text_convert(lineText))
     else:
         print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
         print("path : " + srcDir + "  filename : " + dstPath +
