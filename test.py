@@ -143,7 +143,6 @@ def argument_convert(lineArg,argCnt):
 
     argCnt = len(argList)
     outLineArg = argList[0][-2:] + "["
-    #print(outLineArg + str(argCnt))
     while argCnt is not 2:
         outLineArg = outLineArg + argList[argCnt-1] + ","
         argCnt -= 1
