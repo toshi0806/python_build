@@ -57,6 +57,8 @@ dateText = dt_now.strftime("%Y/%m/%d %H:%M:%S")
 inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
 
+outText = open(dstPath, 'a', encoding='UTF-8')
+
 ######################################
 def argument_convert(lineArg,argCnt):
     lineArg = 'execute @e[type=armor_stand,r=3]'
@@ -124,7 +126,6 @@ for i in range(0, 10000):
     print("\n\nINPUT-" + lineText)
     if lineText:
         print("変換処理を実行します")
-        outText = open(dstPath, 'a', encoding='UTF-8')
         outText.write(command_text_convert(lineText))
     else:
         print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
