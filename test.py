@@ -3,6 +3,8 @@ import os
 import datetime
 import re
 
+cmdExeList = list()
+cmdExeList.clear
 #!dstPath出力パス,srcPath入力パス,srcDir入力ディレクトリ
 suffix = '.mcfunction'
 defaultdstPath = 'converted'
@@ -60,37 +62,65 @@ inText.close
 outText = open(dstPath, 'a', encoding='UTF-8')
 
 ######################################
-def argument_convert(lineArg,argCnt):
+def argument_convert(lineArg):
+    argChecker = re.search(r'\@.\[',lineArg)
+    if argChecker is None:
+        print("[引数変換]引数付きセレクタを判定出来ませんでした。無変換で続行します。")
+        print("CMD:" + lineArg)
+        return lineArg
+    argCnt = lineArg.count(r'\@.\[')
     #セレクタの重複は分割してこの関数を実行してセレクタが一個の状態でのみ動作するものとする
     if argCnt >= 2:
-        print("変換処理でエラーが発生しました。")
+        print("[引数変換]セレクタを二個以上判定しました。 Selector:" + str(argCnt))
+        print("errorCMD:" + lineArg)
         exit()
+        
     #lineArg = "execute @e[type=armor_stand]"
-    getArg = re.search(r'\@.\[(.+)\]',lineArg)
-    getArg = getArg.group(0)[:-1]
+    getArg = re.search(r'\@.\[(.+)\]',lineArg).group(0)[:-1]
     lineArg = lineArg.replace(getArg,'SELECTOR_')
     print("IN:" + str(getArg))
-    argCnt = getArg.count(",")
-    argListOld = list()
-    argList = list()
-    argListTemp = list()
-    argList.append("SELTYPE=" + getArg[0:2])
-    while argCnt:
+    argListOld = argList = argListTemp = list()
+    argListOld.clear()
+    argList.clear()
+    argListTemp.clear()
+    selEntity = getArg[0:2]
+    #selEntityはセレクタのタイプを保存し、後から構成するときに使用
+
+    #引数を抜き取ってargListOldリストに追加していく
+    #getArg<@e[type=!player,r=3 <--最後の,の文字数目を取得(posArg)し
+    #posArg+1文字目から最後までの文字列を抜き取る
+    argFlag = True
+    posArg = getArg.rfind(',')
+    if posArg is -1:
+        argListOld.append(getArg[3:])
+        argFlag = False
+        print("[convArg]引数が一つのため、抜き取りました。 --> " + str(argListOld))
+
+    while argFlag:
+        #最初から引数がないとposArg=-1
         posArg = getArg.rfind(',')
+        ArgCnt = getArg.count(',')
         argListOld.append(getArg[posArg+1:])
         getArg = getArg[:posArg]
-        if argCnt is 1:
-            argListOld.append(getArg[3:])
-        argCnt -= 1
+        print(getArg)
+        if ArgCnt <= 1:
+            endArg = getArg.rfind('[')
+            print(str(getArg) + " " + str(endArg))
+            argListOld.append(getArg[endArg+1:])
+            print("[convArg]複数の引数を抜き取りました。 --> " + str(argListOld))
+            break
     argCnt = len(argListOld)
 
     #引数を変換するための一部特殊構成引数構築のためのフラグ
     distanceBuild = disMin = disMax = False
     levelBuild = levMin = levMax = False
-
-    while argCnt:
-        selTemp = argListOld[argCnt-1]
-        if selTemp.startswith(("type=","name=","x=","y=","z=","dx=","dy=","dz=","scores=")):
+    selTempLoop = len(argListOld)
+    convArg = "DELETED"
+    for i in range(0,selTempLoop):
+        selTemp = getArg
+        print("[convArg]現在の引数の数 --> " + str(len(argListOld)))
+        print(selTemp + " by " + str(argListOld) + "\nargList=" + str(argListTemp))
+        if selTemp.startswith(("type=","name=","x=","y=","z=","dx=","dy=","dz=","scores=","tag=")):
             convArg = selTemp
         elif selTemp.startswith("r="):
             #r,rm,l,lmはあとから構築
@@ -106,20 +136,27 @@ def argument_convert(lineArg,argCnt):
             levelBuild = True
             levMin = selTemp[2:]
         elif selTemp.startswith("m="):
-            modeTemp = selTemp
-            if modeTemp.endswith("a"):
-                modeTemp = "gamemode=adventure"
-            elif modeTemp.endswith("c"):
-                modeTemp = "gamemode=creative"
-            elif modeTemp.endswith("s"):
-                modeTemp = "gamemode=survival"
-            convArg = modeTemp
+            if selTemp.endswith("a"):
+                selTemp = "gamemode=adventure"
+            elif selTemp.endswith("c"):
+                selTemp = "gamemode=creative"
+            elif selTemp.endswith("s"):
+                selTemp = "gamemode=survival"
+        elif selTemp.startswith("c="):
+            argListTemp.append(str(re.sub('c=','limit=',selTemp)))
         try:
             argListTemp.append(convArg)
         except:
             print("Failed append " + selTemp)
         convArg = "DELETED"
-        argCnt -= 1
+        if len(argListOld) >= 20:
+            print("argList error")
+            exit()
+        selTempLoop -= 1
+        if selTempLoop == 0:
+            print("[convArg]現在の引数の数 --> " + str(len(argListTemp)) + "\n" + str(argListOld))
+            break
+
     if disMin is None:
         disMin = ""
     if disMax is None:
@@ -138,20 +175,26 @@ def argument_convert(lineArg,argCnt):
         argListTemp.append(levArg)
 
     argCnt = len(argListTemp)
-    while argCnt:
-        if argListTemp[argCnt-1] is not "DELETED":
-            argList.append(argListTemp[argCnt-1])
-        argCnt -= 1
-    #print(str(argList))
+    print("[convArg]現在の引数の数 --> " + str(len(argListTemp)) + "\n" + str(argListTemp))
+    
+    if argList.count('DELETED') > 0:
+        print(str(argList.count('DELETED')) + "個の要素をargListから削除")
+        for i in range(0,argList.count('DELETED')):
+            argList.remove('DELETED')
+    argCnt -= 1
+    print("[convArg]argListの数 --> " + str(len(argList)) + "\n" + str(argList))
 
     argCnt = len(argList)
-    outLineArg = argList[0][-2:] + "["
+    print("最終的な引数の数 <-- " + str(argCnt) + "\nArglist -->" + str(argList))
+    #outLineArg = "@" + selEntity + "["
+    outLineArg = selEntity + "["
     while argCnt > 2:
         outLineArg = outLineArg + argList[argCnt-1] + ","
         argCnt -= 1
     outLineArg = outLineArg + argList[argCnt-1]
     print("OUT:" + outLineArg)
     lineArg = lineArg.replace('SELECTOR_',getArg)
+    print("argconv=" + lineArg)
     return lineArg
 #####################################
 def type_convert(cmdType,cmdConv):
@@ -161,12 +204,35 @@ def type_convert(cmdType,cmdConv):
         result = cmdConv
     return result
 ######################################
+def list_in_execute_and_other_command(cmdLineWrite,exePos):
+    print("[other]通常コマンドを分離させます")
+    #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
+    ALL_COMMAND = list()
+    ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
+    ALL_COMMAND_COUNT = len(ALL_COMMAND)
+    while ALL_COMMAND_COUNT is not 0:
+        exePos = cmdLineWrite.rfind(ALL_COMMAND[ALL_COMMAND_COUNT-1])
+        ALL_COMMAND_COUNT -= 1
+        if exePos is not -1:
+            print("[other]分離コマンド --> " + ALL_COMMAND[ALL_COMMAND_COUNT])
+            break
+    cmdExeList.append(cmdLineWrite[:exePos-1])
+    #上で引き抜いたコマンドがexecute重複の場合、正常に分離されないため修正する
+    cmdLineWrite = cmdLineWrite[exePos:]
+    cmdExeList.append(cmdLineWrite)
+    print("[other]分離コマンドリスト --> " + str(cmdExeList))
+    #この関数を実行したときは引数をすでに変換した状態にして
+    #フラグを立てて引数変換を実行しないようにする
+    loopCnt = len(cmdExeList)
+    while loopCnt is not 0:
+        cmdExeList[loopCnt-1] = argument_convert(cmdExeList[loopCnt-1])
+        loopCnt -= 1
+    return cmdLineWrite
+######################################
 def command_text_convert(cmdLine):
     multiCmd = False
-    cmdExeList = list()
-    cmdExeList.clear
     #execute以外にも対応させる
-    #startswithは標準ライブラリのメソッドなので
+    #startswithは標準ライブラリのメソッ
     if cmdLine.startswith("#"):
         print("コメント行です。")
         convType = 0
@@ -179,35 +245,35 @@ def command_text_convert(cmdLine):
     else:
         print("コマンド構文自体の変換は必要ありません。")
         convType = 0
+    print("command_text_convert <-- " + cmdLine)
 
     cntSelector = cmdLine.count('@')
     if cntSelector >= 2:
         print("複数のセレクタを検知しました。")
         #executeのeの部分の文字数目が入る。
         exePos = cmdLine.rfind('execute')
+        print("ループ前executeの位置:" + str(exePos) + "\n" + cmdLine)
         #複数のセレクタがある→分解しcmdExeTestに入る。
-        while exePos is not 0:
+        exeConvMulti = True
+        if exePos is 0:
+            cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
+            print(str(cmdExeList))
+            exeConvMulti = False
+        #↑セレクタ二個以上、execute一個の時executeの位置を検知し分離させる
+        #コマンドを分離させるには
+        while exePos > 0 and exeConvMulti:
+            cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
             cmdExeList.append(cmdLine[exePos:])
             cmdLine = cmdLine[:exePos]
             exePos = cmdLine.rfind('execute')
+            print("ループ中executeの位置:" + str(exePos) + "\n" + cmdLine)
             if exePos is 0:
                 cmdExeList.append(cmdLine)
+                print("executeコマンドを二個以上検知しました。")
+                print(str(cmdExeList))
                 multiCmd = True
+                break
         #↑セレクタが二個以上、execute2個以上の時cmdExeListにコマンドを分割する。
-        if exePos is 0:
-            ALL_COMMAND = list()
-            ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
-            ALL_COMMAND_COUNT = len(ALL_COMMAND)
-            while ALL_COMMAND_COUNT is not 0:
-                exePos = cmdLine.rfind(ALL_COMMAND[ALL_COMMAND_COUNT-1])
-                ALL_COMMAND_COUNT -= 1
-                if exePos is not -1:
-                    print(ALL_COMMAND[ALL_COMMAND_COUNT])
-                    break
-            cmdExeList.append(cmdLine[:exePos-1])
-            cmdLine = cmdLine[exePos:]
-            cmdExeList.append(cmdLine)
-        #↑セレクタ二個以上、execute一個の時空白三個を検知しコマンドを分離させる
         print(str(cmdExeList))
         multiCmd = True
 
@@ -215,7 +281,7 @@ def command_text_convert(cmdLine):
     if cmdLine.startswith("#") == False and re.search('\@', cmdLine) and multiCmd is None:
         if re.search(r'\@.\[', cmdLine):
             print("このコマンドは引数付きセレクタがあります。")
-            cmdLine = argument_convert(cmdLine,cntSelector)
+            cmdLine = argument_convert(cmdLine)
         else:
             print("このコマンドはセレクタがありますが変換は不要です。")
             
@@ -235,13 +301,16 @@ def command_text_convert(cmdLine):
             cmdExe_cmdLine = cmdExeList.pop(0)
             exeListCnt = len(cmdExeList)
             cmdExe_cntSelector = cmdExe_cmdLine.count('@')
+            print("[cmdExe]cmdLine=" + cmdExe_cmdLine)
             if re.search(r'\@.\[', cmdExe_cmdLine):
                 print("[cmdExe]セレクタを変換。")
-                cmdExeBuild.append(argument_convert(cmdExe_cmdLine,cmdExe_cntSelector))
+                buildConv = argument_convert(cmdExe_cmdLine)
+                cmdExeBuild.append(buildConv)
+                print("[cmdExe]セレクタ変換後 --> " + buildConv)
             else:
                 print("[cmdExe]セレクタがありますが変換は不要です。")
                 cmdExeBuild.append(cmdExe_cmdLine)
-        print("[cmdExe]分割されたコマンドを構築します。")
+        print("[cmdExe]分割されたコマンドを構築します。 " + str(cmdExeBuild))
         exeListCnt = len(cmdExeBuild)
         exeListCntMax = exeListCnt
         convResult = ""
@@ -270,7 +339,7 @@ for i in range(0, 10000):
 
     print("\n\nINPUT-" + lineText)
     if lineText:
-        print("変換処理を実行します")
+        print("変換処理を実行します <-- " + lineText)
         outText.write(command_text_convert(lineText))
     else:
         print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
