@@ -1,0 +1,36 @@
+Minecraft Bedrock Editionのコマンド群functionを、Minecraft Java Editionで
+利用できる形に変換するためのコマンド
+
+目標
+execute @e[tag=select,scores={sn=10,random=1..2},type=armor_stand,r=1000] ~ ~ ~ execute @e[tag=clone,c=1,type=armor_stand] ~ ~ ~ tp @s ~ 35 ~
+↓
+execute as @e[tag=select,scores={sn=10,random=1..2},type=armor_stand,distance=..1000] at @s as @e[tag=clone,limit=1,type=armor_stand] at @s run tp @s ~ 35 ~
+に変換を行う。
+
+注意点
+１，execute重ね掛けは3回まで対応できるようにする。
+２，相対座標にて「~~~」や「~~1~」と入力されたものは対応しない予定だったが、正規表現で対応できるなら対応する（チルダ、キャロット、絶対座標指定）
+３，セレクタの分割はセレクタごとに行う。
+４，detectについての対応は後々考えることにする。
+５，アイテムやブロックＩＤのダメージ値は互換性がないため、後々考えることにする。
+６，変数名もっと自重
+
+変換フローチャート
+main
+１，変換するためのファイル読み込み（引数で入力ファイルパスと出力名を入力
+入力ファイルパス srcPath のディレクトリ srcDir 出力ファイルパス dstPath
+２，TestFindにdstPathが存在するかを確認し再生成もしくは実行中止
+３，タイムスタンプの出力
+４，ファイルのコマンドを一括で読み込む
+textReadに入力ファイルをreadで開き、readlines()でbeforeTextにテキストをすべて代入
+ここからループ[i]
+５，lineTextにi行目の文字列を代入
+if lineTextが空白でなければa、空白ならb
+６a、command_text_convert(lineText)を実行
+６b，実行結果を出力し終了
+
+command_text_convert(cmdLine)
+multiCmd = False
+if cmdLineの最初がexecuteである→a、それ以外→b
+１a，convType=1
+１b，convType=0

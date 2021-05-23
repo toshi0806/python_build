@@ -331,13 +331,13 @@ textRead = open(srcPath, "r", encoding="utf_8")
 beforeText = textRead.readlines()
 textRead.close()
 print("変換テキストを読み込みました。")
-for i in range(0, 10000):
+for i in range(10000):
     try:
         lineText = beforeText[i]
     except:
         lineText = ""
 
-    print("\n\nINPUT-" + lineText)
+    print("INPUT-" + lineText)
     if lineText:
         print("変換処理を実行します <-- " + lineText)
         outText.write(command_text_convert(lineText))
