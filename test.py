@@ -91,11 +91,20 @@ def argument_convert(lineArg):
     #posArg+1文字目から最後までの文字列を抜き取る
     argFlag = True
     posArg = getArg.rfind(',')
+    #scores引数内コロンを区別するため、あらかじめargListOldに追加しDELETEDとして続行する
+    try:
+        argListOld.append(re.search(r'scores=\{.*\,.*\}',getArg).group(0))
+    except:
+        print("[convArg]scores引数はありません。")
+    else:
+        print("[convArg]scores引数を取得しました。 --> " + argListOld[0])
+        getArg = re.sub(argListOld[0],'DELETED',getArg)
+
     if posArg is -1:
         argListOld.append(getArg[3:])
         argFlag = False
         print("[convArg]引数が一つのため、抜き取りました。 --> " + str(argListOld))
-
+        
     while argFlag:
         #最初から引数がないとposArg=-1
         posArg = getArg.rfind(',')
@@ -118,7 +127,6 @@ def argument_convert(lineArg):
     convArg = "DELETED"
     for i in range(0,selTempLoop):
         selTemp = getArg
-        print("[convArg]現在の引数の数 --> " + str(len(argListOld)))
         print(selTemp + " by " + str(argListOld) + "\nargList=" + str(argListTemp))
         if selTemp.startswith(("type=","name=","x=","y=","z=","dx=","dy=","dz=","scores=","tag=")):
             convArg = selTemp
