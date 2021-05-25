@@ -42,6 +42,12 @@ executeサブコマンドは、
 ただし、ダメージ値が0の場合大体IDは使いまわされているので、この場合は
 (Java)execute as @a at @s if block ~ ~-1 emerald_block run summon lightning_bolt
 と変換することはできる。
+★(BE)execute @a ~ ~ ~ execute @e[c=3,r=6,type=!player,type=!armor_stand] ~ ~ ~ effect @s instant_health 1 255 true
+のように、executeを二重(n重)に重ねている場合が多く存在する
+このコマンドは
+(Java)
+execute as @a at @s as @e[limit=3,distance=..6,type=!player,type=!armor_stand] run effect give @s instant_health 1 255 true
+                    ^ここからexecute二個目の条件　のように条件のサブコマンドだけつなげることで同等の動作ができる。
 
 executeコマンドで実行するコマンド内にもセレクタがある場合は引数を変換する
 execute @a ~ ~ ~ tp @s[l=10,lm=5] 382 50 -324
