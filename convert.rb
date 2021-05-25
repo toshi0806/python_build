@@ -19,8 +19,8 @@ def conv_execute line
   #   解析を楽にするために、末尾に "," を追加
   param = $1 + ','
 
-  # セレクタの中身を格納するための配列を生成
-  params = []
+  # セレクタの中身を格納するためのハッシュを生成
+  params = {}
 
   # セレクタの中身の文字列が空文字列でないということは、未解析のパラメータが残っているはず
   while param != ''
@@ -36,7 +36,7 @@ def conv_execute line
       left = $3
     end
 
-    params.push [key, value]
+    params[key] = value
     param = left
   end
 
@@ -45,7 +45,37 @@ def conv_execute line
   # p [1, params, x, y, z, cmd]
 
   # 出力用文字列を生成
-  result = "execute as @e[#{params.to_s}] at @s run #{cmd}"
+  result = "as @e["
+  
+  # セレクタ内引数の変換
+  if params.has_key?('r') && params.has_key?('rm')
+    params['distance'] = "#{params['rm']}..#{params['r']}"
+    params.delete 'r'
+    params.delete 'rm'
+  elsif params.has_key?('r')
+    params['distance'] = "..#{params['r']}"
+    params.delete 'r'
+  elsif params.has_key?('rm')
+    params['distance'] = "#{params['rm']}.."
+    params.delete 'rm'
+  end
+
+  params.each do |key, value|
+    result += "#{key}=#{value},"
+  end
+  # 最後の余計な "," を削除
+  result.sub!(/,$/,'')
+  result += "] "
+
+  result += "positioned #{x} #{y} #{z} " if x != "~"
+    
+  result += "at @s "
+  case cmd
+  when /^execute/
+    result += conv_execute cmd
+  else
+    result += "run #{cmd}"
+  end
 
   return result
 end
@@ -62,7 +92,7 @@ while line=gets
   # 行頭が "execute" 以外の行はそのまま
   case line
   when /^execute/
-    java_line += conv_execute line
+    java_line += "execute " + conv_execute(line)
   else
     java_line += line
   end
