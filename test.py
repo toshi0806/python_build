@@ -229,6 +229,7 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos):
     cmdLineWrite = cmdLineWrite[exePos:]
     cmdExeList.append(cmdLineWrite)
     print("[other]分離コマンドリスト --> " + str(cmdExeList))
+
     #この関数を実行したときは引数をすでに変換した状態にして
     #フラグを立てて引数変換を実行しないようにする
     loopCnt = len(cmdExeList)

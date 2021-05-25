@@ -1,0 +1,65 @@
+Minecraft BEで利用できるコマンドをMinecraft Java Editionで利用できる形に変換するプログラム
+・今回書いているのは「executeコマンドの変換」と「セレクタ（コマンドの実行対象とするエンティティ（物体、mob、プレイヤー）で
+対象となるエンティティを絞るための引数の変換（例:r=5...コマンドの実行地点から半径五ブロック以内のエンティティを対象にする、等）」
+
+〇executeコマンドの形式
+そもそもexecuteコマンドはセレクタで指定したエンティティを対象（＝後述するコマンドをそのエンティティが実行したことにする）コマンド。
+
+Minecraft BEでのコマンド方式
+execute セレクタ 実行地点座標　コマンド
+チルダは相対座標で、実行エンティティからx,y,z軸に〇ブロックの地点でコマンドを実行するという意味。
+例:execute @a[tag=red_team,r=10,rm=3] ~ ~1 ~ tag @s remove red_team
+-->executeコマンド実行地点から半径3ブロック以上10ブロック以下の範囲でtag「red_team」を所持するプレイヤーから「red_team」を削除する
+
+Minecraft Java Editionでのコマンド方式
+execute サブコマンド(サブコマンド引数) run コマンド
+サブコマンドの種類 
+https://hollys-command-lecture.hatenablog.com/entry/1.13-execute
+公式wiki https://minecraft.fandom.com/ja/wiki/%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89/execute
+変換するとき全てサブコマンドで条件を指定する必要があるため、〇セレクタ部分　〇実行地点座標　はサブコマンドで指定しなければならない。
+BEで挙げたコマンドを変換すると、
+execute as @a[tag=red_team,distance=3..10] at @s positioned ~ ~1 ~ run tag @s remove red_team
+という形になる。
+・asサブコマンドで実行対象エンティティを絞る
+・at @sは、BEでは「指定したエンティティがその場所から（追加で実行地点座標を計算し、その場所で）実行する」だった仕様に対しJava番では
+指定したエンティティの実行地点を保持しないので、同党の動作をさせるためには「at @s」が必要になる（範囲指定条件やrun コマンドの時点で不具合が起きる）
+・セレクタ内引数は、一部互換性がないので応じて変換する(r=3ならdistance=..3,rm=3ならdistance=3..,r=30,rm=3ならdistance=3..30)
+
+変換が必要なセレクタ引数（ターゲットセレクタ）は
+・r=,rm= (distance=) ※絞り込む範囲
+・l=,lm= (level=) ※経験値レベル範囲
+・m= (gamemode=) ※ゲームモード指定aはadventureに、cはcreativeに、sはsurvivalに変換する。m=!cなど否定条件の場合もある。
+・c= (limit=) ※絞る物体の数
+
+executeサブコマンドは、
+・座標を指定する positioned 座標
+・実行エンティティを指定する as セレクタ
+を利用する。~ ~ ~(もしくは~~~)の時はpositionedサブコマンドを端折っても良い。
+
+★特殊例で、(BE)execute @a ~ ~ ~ detect ~ ~-1 ~ emerald_block 0 summon ligtning_bolt など。detectがある場合は
+ブロックIDの互換性とダメージ値（この場合0)の都合で変換が難しい（変換が必要なものだけでも50種類以上のIDの情報が必要
+ので、変換しない。 ※ブロックIDやアイテムIDのダメージ値はJava版で廃止されそれぞれ固有のIDが新しく付けられている
+ただし、ダメージ値が0の場合大体IDは使いまわされているので、この場合は
+(Java)execute as @a at @s if block ~ ~-1 emerald_block run summon lightning_bolt
+と変換することはできる。
+
+executeコマンドで実行するコマンド内にもセレクタがある場合は引数を変換する
+execute @a ~ ~ ~ tp @s[l=10,lm=5] 382 50 -324
+-->execute as @a at @s run tp @s[level=5..10] 382 50 -324
+
+座標指定では x,y,zの値を直接入力(絶対座標)する方法、チルダ~を使って指定する(相対座標)方法、
+キャロット^で視点を検知し方角の座標を自動算出する方法の三つがある。値はそれぞれ倍精度浮動小数点数（符号ビットあり）の範囲で入力できる。
+絶対座標とチルダは混合して使用できるが、キャロットは必ずすべてキャロット指定でなければ実行できない。
+
+サブコマンドが実装されたのはMinecraft1.13以降だったはずなので、1.12.2以下のバージョンではBE版とほぼ同じ記述方法。
+
+ファイル形式はUTF-8(Bom無し)形式でのみ実行出来る。(TeraPadの文字コード指定保存→UTF-8Nの形式)
+
+コメント行は最初に「#」
+
+executeコマンドで実行するコマンドの中でほんの一部互換性に問題があるものがあるが、把握しきれないのでそのまま。
+例:(BE)xp 10l @a[r=10] --> (Java)xp add @a[r=10] 10 levels (10lならlevels,10ならpoints)
+
+tntrun.game.mcfunctionはMinecraft BE内で実行していろいろなオブジェクトや変数の代わりとして使用するscoreboardコマンド等を使って制作した
+ミニゲームの一つ（実際に使ったものそのまま）です。
+tntrun.game変換後.mcfunctionとして手動で変換したファイルを置いておきます。
