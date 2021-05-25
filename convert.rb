@@ -1,42 +1,23 @@
 #! /usr/bin/env ruby
 # coding: utf-8
 
-# 実行するコマンドで、再度 execute が出てくる場合があるので、メソッド化しておく
-def get_execute_params line
-# 以下の記述になっていることを想定
-#   行頭が "execute"
-#   セレクタ
-#   x, y, z 座標
-#   実行するコマンド
-# 最短マッチさせるために .+ ではなく .+? を利用
-  if /^execute (.+?) (.+?) (.+?) (.+?) ?(.*)/ =~ line
-    # 返り値は [引数, x座標, y座標, z座標, 実行コマンド]　という配列
-    return $1, $2, $3, $4, $5
-  else
-    # マッチしなかったら、標準エラー出力に警告を出力して終了
-    STDERR.puts 'match fail'
-    exit
-  end
-end
-
-# 標準入力から１行づつ読み込み。入力行がなくなったらループを抜けて終了
-while line=gets
-  # 行末の改行文字を削除
-  line.chomp!
-
-  # 行頭が "execute" 以外の行は無視
-  next unless line =~ /^execute/
-
+def conv_execute line
   # execute の引数を取得
-  selector, x, y, z, cmd = get_execute_params line
+  # 以下の記述になっていることを想定
+  #   行頭が "execute"
+  #   セレクタ
+  #   x, y, z 座標
+  #   実行するコマンド
+  # 最短マッチさせるために .+ ではなく .+? を利用
+  /^execute (.+?) (.+?) (.+?) (.+?) ?(.*)/ =~ line
+  selector, x, y, z, cmd = $1, $2, $3, $4, $5
 
   # セレクタの中身の解析
   # まず "["と"]" の中身を切り出す
   /^@.+\[(.*)\]/ =~ selector
   # 切り出した内容を param に格納
-  param = $1
-  # param の解析を楽にするために、末尾に "," を追加
-  param += ','
+  #   解析を楽にするために、末尾に "," を追加
+  param = $1 + ','
 
   # セレクタの中身を格納するための配列を生成
   params = []
@@ -59,9 +40,35 @@ while line=gets
     param = left
   end
 
-# デバッグ用プリント
-#  p [0, line]
-#  p [1, params, x, y, z, cmd]
+  # 解析結果デバッグ用プリント
+  # p [0, line]
+  # p [1, params, x, y, z, cmd]
+
+  # 出力用文字列を生成
+  result = "execute as @e[#{params.to_s}] at @s run #{cmd}"
+
+  return result
+end
+
+# main ルーチン
+# 標準入力から１行づつ読み込み。入力行がなくなったらループを抜けて終了
+while line=gets
+  # 行末の改行文字を削除
+  line.chomp!
+
+  # 変換後文字列を初期化
+  java_line = ''
+
+  # 行頭が "execute" 以外の行はそのまま
+  case line
+  when /^execute/
+    java_line += conv_execute line
+  else
+    java_line += line
+  end
+
+  puts java_line
+
 end
 
   
