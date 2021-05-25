@@ -31,7 +31,7 @@ def conv_execute line
 
     # value が "{" で始まっていた場合、"}" より前に "," が来る可能性があるので、再判定
     if /^\{/ =~ value
-      /(.+?)=\{(.+?)\},(.*)/.match param
+      /(.+?)=(\{.+?\}),(.*)/.match param
       key, value = $1, $2
       left = $3
     end
