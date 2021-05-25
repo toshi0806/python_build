@@ -59,6 +59,12 @@ def conv_execute line
     params['distance'] = "#{params['rm']}.."
     params.delete 'rm'
   end
+  # c
+  if params.has_key?('c')
+    params['limit'] = params['c']
+    params.delete 'c'
+  end
+#  pp [20, params]
 
   params.each do |key, value|
     result += "#{key}=#{value},"
