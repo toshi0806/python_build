@@ -37,14 +37,12 @@ def conv_execute line
   while param != ''
     # "変数名=値, " の組を切り出して [変数名, 値] の配列（タプル）を作って、params 配列に追加していく
     /(.+?)=(.+?),(.*)/.match param
-    key, value = $1, $2
-    left = $3
+    key, value, left = $1, $2, $3
 
     # value が "{" で始まっていた場合、"}" より前に "," が来る可能性があるので、再判定
     if /^\{/ =~ value
       /(.+?)=(\{.+?\}),(.*)/.match param
-      key, value = $1, $2
-      left = $3
+      key, value, left = $1, $2, $3
     end
 
     params[key] = value
