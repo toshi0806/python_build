@@ -69,6 +69,18 @@ def conv_execute line
     params['distance'] = "#{params['rm']}.."
     params.delete 'rm'
   end
+  #  l & lm
+  if params.has_key?('l') && params.has_key?('lm')
+    params['level'] = "#{params['lm']}..#{params['l']}"
+    params.delete 'l'
+    params.delete 'lm'
+  elsif params.has_key?('l')
+    params['level'] = "..#{params['l']}"
+    params.delete 'l'
+  elsif params.has_key?('lm')
+    params['level'] = "#{params['lm']}.."
+    params.delete 'lm'
+  end
   # c
   if params.has_key?('c')
     params['limit'] = params['c']
