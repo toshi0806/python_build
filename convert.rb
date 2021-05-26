@@ -13,8 +13,15 @@ def conv_execute line
   #   x, y, z 座標
   #   実行するコマンド
   # 最短マッチさせるために .+ ではなく .+? を利用
-  /^execute (.+?) (.+?) (.+?) (.+?) (.*)/ =~ line
-  selector, x, y, z, cmd = $1, $2, $3, $4, $5
+  if /^execute (.+?) (.+?) (.+?) (.+?) (.*)/ =~ line
+    selector, x, y, z, cmd = $1, $2, $3, $4, $5
+  else
+    # x,y,z座標以降が存在しない場合
+    /^execute (.+)/ =~ line
+    selector = $1
+    # positioned を付加するための判定に x を使っているので、ダミー値を代入
+    x = "~"    
+  end
 
   # セレクタの中身の解析
   # まず "["と"]" の中身を切り出す
@@ -49,9 +56,10 @@ def conv_execute line
   # p [1, params, x, y, z, cmd]
 
   # 出力用文字列を生成
-  result = "as @e["
+  result = "execute as @e["
   
   # セレクタ内引数の変換
+  #  r & rm
   if params.has_key?('r') && params.has_key?('rm')
     params['distance'] = "#{params['rm']}..#{params['r']}"
     params.delete 'r'
@@ -102,7 +110,7 @@ while line=gets
   # 行頭が "execute" 以外の行はそのまま
   case line
   when /^execute/
-    java_line += "execute " + conv_execute(line)
+    java_line += conv_execute(line)
   else
     java_line += line
   end
