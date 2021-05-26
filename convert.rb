@@ -86,6 +86,30 @@ def conv_execute line
     params['limit'] = params['c']
     params.delete 'c'
   end
+  # m
+  #   = の後に , で複数列挙される可能性は想定していない
+  if params.has_key?('m')
+    params['gamemode'] = ''
+    # 値の先頭が '!' なら、変換後の値の先頭も '!' 
+    if /^!(.+)/ =~ params['m']
+      params['gamemode'] = '!'
+      params['m'] = $1
+    end
+
+    # 各々変換
+    # 先頭に '!' が入っているかもしれないので単純な代入ではなく、+= で連結
+    case params['m']
+    when 'a'
+      params['gamemode'] += 'adventure'
+    when 'c'
+      params['gamemode'] += 'creative'
+    when 's'
+      params['gamemode'] += 'survival'
+    end
+
+    params.delete 'm'
+  end
+
 #  pp [20, params]
 
   params.each do |key, value|
