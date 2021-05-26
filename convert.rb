@@ -3,7 +3,7 @@
 
 # 標準入力から変換元ファイルを読み込んで、標準出力に変換結果を出力
 # 以下のように実行
-# $ /convert.rb < tntrun.game.mcfunction   > tntrun.game.mcfunction-toshi
+# $ ./convert.rb < tntrun.game.mcfunction   > tntrun.game.mcfunction-toshi
 
 def conv_execute line
   # execute の引数を取得
