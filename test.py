@@ -144,12 +144,17 @@ def argument_convert(lineArg):
             levelBuild = True
             levMin = selTemp[2:]
         elif selTemp.startswith("m="):
+            gmTemp = "gamemode="
+            if (re.search('!',selTemp)):
+                gmTemp += "!"
             if selTemp.endswith("a"):
-                selTemp = "gamemode=adventure"
+                gmTemp += "adventure"
             elif selTemp.endswith("c"):
-                selTemp = "gamemode=creative"
+                gmTemp += "creative"
             elif selTemp.endswith("s"):
-                selTemp = "gamemode=survival"
+                gmTemp += "survival"
+            selTemp = gmTemp
+            print("gamemode=" + selTemp)
         elif selTemp.startswith("c="):
             argListTemp.append(str(re.sub('c=','limit=',selTemp)))
         try:
@@ -217,16 +222,25 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos):
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
     ALL_COMMAND = list()
     ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
-    ALL_COMMAND_COUNT = len(ALL_COMMAND)
-    while ALL_COMMAND_COUNT is not 0:
-        exePos = cmdLineWrite.rfind(ALL_COMMAND[ALL_COMMAND_COUNT-1])
-        ALL_COMMAND_COUNT -= 1
+    ALL_COMMAND_CNT = len(ALL_COMMAND)
+    while ALL_COMMAND_CNT is not 0:
+        exePos = cmdLineWrite.rfind(ALL_COMMAND[ALL_COMMAND_CNT-1])
+        ALL_COMMAND_CNT -= 1
         if exePos is not -1:
-            print("[other]分離コマンド --> " + ALL_COMMAND[ALL_COMMAND_COUNT])
+            print("[other]分離コマンド --> " + ALL_COMMAND[ALL_COMMAND_CNT])
             break
-    cmdExeList.append(cmdLineWrite[:exePos-1])
-    #上で引き抜いたコマンドがexecute重複の場合、正常に分離されないため修正する
-    cmdLineWrite = cmdLineWrite[exePos:]
+    cmdExeList.append(cmdLineWrite[exePos:])
+    cmdLineWrite = cmdLineWrite[:exePos-1]
+    #分離させた通常コマンドをListに入れてその分を削除
+    
+    print("[other]通常コマンド分離後 --> " + cmdExeList[0])
+    exeCnt = cmdLineWrite.count('execute')
+    while exeCnt >= 2:
+        exePos = cmdLineWrite.rfind('execute')
+        print("[other]execute重複抜き取り,exeCnt --> " + cmdLineWrite[exePos:] + " " + str(exeCnt))
+        cmdExeList.append(cmdLineWrite[exePos:])
+        cmdLineWrite = cmdLineWrite[:exePos-1]
+        exeCnt -= 1
     cmdExeList.append(cmdLineWrite)
     print("[other]分離コマンドリスト --> " + str(cmdExeList))
 
@@ -279,11 +293,10 @@ def command_text_convert(cmdLine):
             if exePos is 0:
                 cmdExeList.append(cmdLine)
                 print("executeコマンドを二個以上検知しました。")
-                print(str(cmdExeList))
                 multiCmd = True
                 break
         #↑セレクタが二個以上、execute2個以上の時cmdExeListにコマンドを分割する。
-        print(str(cmdExeList))
+        print("List --> " + str(cmdExeList))
         multiCmd = True
 
 
@@ -319,6 +332,7 @@ def command_text_convert(cmdLine):
             else:
                 print("[cmdExe]セレクタがありますが変換は不要です。")
                 cmdExeBuild.append(cmdExe_cmdLine)
+
         print("[cmdExe]分割されたコマンドを構築します。 " + str(cmdExeBuild))
         exeListCnt = len(cmdExeBuild)
         exeListCntMax = exeListCnt
@@ -339,12 +353,11 @@ def command_text_convert(cmdLine):
 textRead = open(srcPath, "r", encoding="utf_8")
 beforeText = textRead.readlines()
 textRead.close()
+
+cnt = len(beforeText)
 print("変換テキストを読み込みました。")
-for i in range(10000):
-    try:
-        lineText = beforeText[i]
-    except:
-        lineText = ""
+for i in range(0,cnt+1):
+    lineText = beforeText[i]
 
     print("INPUT-" + lineText)
     if lineText:
