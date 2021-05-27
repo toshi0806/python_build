@@ -270,7 +270,12 @@ def command_text_convert(cmdLine):
         convType = 0
     print("command_text_convert <-- " + cmdLine)
 
-    cntSelector = cmdLine.count('@')
+    if convType is not 0:
+        cntSelector = cmdLine.count('@')
+    else:
+        cntSelector = 0
+    #cntSelector=1の時の処理がない
+
     if cntSelector >= 2:
         print("複数のセレクタを検知しました。")
         #executeのeの部分の文字数目が入る。
@@ -282,32 +287,28 @@ def command_text_convert(cmdLine):
             cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
             print(str(cmdExeList))
             exeConvMulti = False
-        #↑セレクタ二個以上、execute一個の時executeの位置を検知し分離させる
-        #コマンドを分離させるには
         while exePos > 0 and exeConvMulti:
             cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
-            cmdExeList.append(cmdLine[exePos:])
             cmdLine = cmdLine[:exePos]
             exePos = cmdLine.rfind('execute')
-            print("ループ中executeの位置:" + str(exePos) + "\n" + cmdLine)
             if exePos is 0:
-                cmdExeList.append(cmdLine)
                 print("executeコマンドを二個以上検知しました。")
                 multiCmd = True
                 break
-        #↑セレクタが二個以上、execute2個以上の時cmdExeListにコマンドを分割する。
+        #list_in_execute_and_other_command が引数変換、execute分解まで実行するようになった
         print("List --> " + str(cmdExeList))
         multiCmd = True
 
-
-    if cmdLine.startswith("#") == False and re.search('\@', cmdLine) and multiCmd is None:
+    #上記execute分解が実行時、すでに変換されているためmultiCmdフラグが立ちこのコマンドは実行されない。
+    #分解の必要がなかった場合は単に引数を変換するのみとして下記を実行
+    if convType is not 0 and re.search('\@', cmdLine) and multiCmd is None:
         if re.search(r'\@.\[', cmdLine):
             print("このコマンドは引数付きセレクタがあります。")
             cmdLine = argument_convert(cmdLine)
         else:
             print("このコマンドはセレクタがありますが変換は不要です。")
             
-    if convType >= 1 and multiCmd is False:
+    if convType is not 0 and multiCmd is False:
         convResult = type_convert(convType,cmdLine)
     #↓multiCmdフラグが立っているとき、配列のセレクタそれぞれ変換して最終的に構成する
     elif multiCmd:
@@ -315,11 +316,6 @@ def command_text_convert(cmdLine):
         exeListCnt = len(cmdExeList)
         while exeListCnt is not 0:
             cmdExeBuild = list()
-            #cmdExe_cmdLine...分割したコマンドを代入する
-            #cmdExeList...分割したコマンドを格納するリスト
-            #exeListCnt...分割したコマンドの数
-            #cmdExe_cntSelector...分割コマンドからセレクタを検知するだけ、2個以上検知したらバグとして強制終了する、その判別を行うのみ
-            #cmdExeBuild...変換後の分割したコマンドを補完し、後から構築する
             cmdExe_cmdLine = cmdExeList.pop(0)
             exeListCnt = len(cmdExeList)
             cmdExe_cntSelector = cmdExe_cmdLine.count('@')
@@ -356,7 +352,7 @@ textRead.close()
 
 cnt = len(beforeText)
 print("変換テキストを読み込みました。")
-for i in range(0,cnt+1):
+for i in range(0,cnt):
     lineText = beforeText[i]
 
     print("INPUT-" + lineText)
