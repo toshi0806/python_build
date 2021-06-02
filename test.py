@@ -118,17 +118,20 @@ def argument_convert(lineArg):
             argListOld.append(getArg[endArg+1:])
             print("[convArg]複数の引数を抜き取りました。 --> " + str(argListOld))
             break
+    
     argCnt = len(argListOld)
 
     #引数を変換するための一部特殊構成引数構築のためのフラグ
     distanceBuild = disMin = disMax = False
     levelBuild = levMin = levMax = False
-    selTempLoop = len(argListOld)
+    selTempLoopCnt = len(argListOld)
     convArg = "DELETED"
-    for i in range(0,selTempLoop):
-        selTemp = getArg
+    print("Oldの引数は" + str(selTempLoopCnt) + "個です。")
+    for i in range(0,selTempLoopCnt):
+        selTemp = argListOld[i]
         print(selTemp + " by " + str(argListOld) + "\nargList=" + str(argListTemp))
         if selTemp.startswith(("type=","name=","x=","y=","z=","dx=","dy=","dz=","scores=","tag=")):
+            print("[convArg]変換不要引数です --> " + selTemp)
             convArg = selTemp
         elif selTemp.startswith("r="):
             #r,rm,l,lmはあとから構築
@@ -144,6 +147,7 @@ def argument_convert(lineArg):
             levelBuild = True
             levMin = selTemp[2:]
         elif selTemp.startswith("m="):
+            print("[convArg]gamemode引数に変換します。 --> " + selTemp)
             gmTemp = "gamemode="
             if (re.search('!',selTemp)):
                 gmTemp += "!"
@@ -153,10 +157,17 @@ def argument_convert(lineArg):
                 gmTemp += "creative"
             elif selTemp.endswith("s"):
                 gmTemp += "survival"
-            selTemp = gmTemp
-            print("gamemode=" + selTemp)
+            convArg = gmTemp
+            print(gmTemp)
         elif selTemp.startswith("c="):
+            print("[convArg]limit引数に変換します。 --> " + selTemp)
             argListTemp.append(str(re.sub('c=','limit=',selTemp)))
+        elif selTemp.startswith("DELETED"):
+            selTemp = ""
+        else:
+            print("[convArg]引数識別において致命的なエラー : " + selTemp)
+            exit()
+
         try:
             argListTemp.append(convArg)
         except:
@@ -165,25 +176,24 @@ def argument_convert(lineArg):
         if len(argListOld) >= 20:
             print("argList error")
             exit()
-        selTempLoop -= 1
-        if selTempLoop == 0:
-            print("[convArg]現在の引数の数 --> " + str(len(argListTemp)) + "\n" + str(argListOld))
-            break
 
-    if disMin is None:
+    if disMin is False:
         disMin = ""
-    if disMax is None:
+    if disMax is False:
         disMax = ""
-    if levMin is None:
+    if levMin is False:
         levMin = ""
-    if levMax is None:
+    if levMax is False:
         levMax = ""
 
     #r,rm,l,lmの構築
     if distanceBuild:
+        print("[convArg]distance引数を生成します。 ")
+        print(str(disMin) + "/" + str(disMax))
         disArg = "distance" + disMin + ".." + disMax
         argListTemp.append(disArg)
     if levelBuild:
+        print("[convArg]level引数を生成します。 ")
         levArg = "level" + levMin + ".." + levMax
         argListTemp.append(levArg)
 
@@ -206,7 +216,7 @@ def argument_convert(lineArg):
         argCnt -= 1
     outLineArg = outLineArg + argList[argCnt-1]
     print("OUT:" + outLineArg)
-    lineArg = lineArg.replace('SELECTOR_',getArg)
+    lineArg = lineArg.replace('SELECTOR_',outLineArg)
     print("argconv=" + lineArg)
     return lineArg
 #####################################
@@ -275,8 +285,10 @@ def command_text_convert(cmdLine):
     else:
         cntSelector = 0
     #cntSelector=1の時の処理がない
-
-    if cntSelector >= 2:
+    if cntSelector is 1:
+        print("セレクタを検知しました。")
+        cmdLine = argument_convert(cmdLine)
+    elif cntSelector >= 2:
         print("複数のセレクタを検知しました。")
         #executeのeの部分の文字数目が入る。
         exePos = cmdLine.rfind('execute')
