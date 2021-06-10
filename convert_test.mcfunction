@@ -26,7 +26,10 @@ execute @a[c=5,l=7000,lm=3,scores={test987j9uq34=3..4},tag=test73482b3r2] ~ ~ ~ 
 #基礎羅列変換8「execute as @a[name="Nekoyama 030330",tag=!sushi] at @s run say 基本羅列変換8」
 execute @a[name="Nekoyama 030330",tag=!sushi] ~ ~ ~ say 基本羅列変換8
 #基礎羅列変換9「execute as @a[gamemode=!adventure,scores={test987j9uq34=!7..23}] at @s run say 基本羅列変換9」
-execute @a[m=!adventure,scores={test987j9uq34=!7..23}] ~ ~ ~ say 基本羅列変換9
+execute @a[m=!a,scores={test987j9uq34=!7..23}] ~ ~ ~ say 基本羅列変換9
+
+#追加分
+tp @a[m=!a,scores={test987j9uq34=!7..23}] 0 8 0
 
 scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2

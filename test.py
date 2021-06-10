@@ -2,6 +2,7 @@ import sys
 import os
 import datetime
 import re
+from typing import AsyncGenerator
 
 cmdExeList = list()
 cmdExeList.clear
@@ -42,10 +43,10 @@ if TestFind:
         print("既存ファイルを削除しますか？(Y/n)")
         cfmDelete = input()
         if cfmDelete.lower() == 'n':
-            print("ファイル名を変更する等措置を行い、改めて実行してください。")
+            print("ファイル名を変更するか、移動させてから実行してください。")
             exit()
         elif cfmDelete.lower() == 'y':
-            print("ファイルを新規に作成します。")
+            print("ファイルを削除し変換します。")
             os.remove(dstPath)
             break
 else:
@@ -79,7 +80,9 @@ def argument_convert(lineArg):
     getArg = re.search(r'\@.\[(.+)\]',lineArg).group(0)[:-1]
     lineArg = lineArg.replace(getArg,'SELECTOR_')
     print("IN:" + str(getArg))
-    argListOld = argList = argListTemp = list()
+    argListOld = list()
+    argList = list()
+    argListTemp = list()
     argListOld.clear()
     argList.clear()
     argListTemp.clear()
@@ -92,13 +95,6 @@ def argument_convert(lineArg):
     argFlag = True
     posArg = getArg.rfind(',')
     #scores引数内コロンを区別するため、あらかじめargListOldに追加しDELETEDとして続行する
-    try:
-        argListOld.append(re.search(r'scores=\{.*\,.*\}',getArg).group(0))
-    except:
-        print("[convArg]scores引数はありません。")
-    else:
-        print("[convArg]scores引数を取得しました。 --> " + argListOld[0])
-        getArg = re.sub(argListOld[0],'DELETED',getArg)
 
     if posArg is -1:
         argListOld.append(getArg[3:])
@@ -111,10 +107,10 @@ def argument_convert(lineArg):
         ArgCnt = getArg.count(',')
         argListOld.append(getArg[posArg+1:])
         getArg = getArg[:posArg]
-        print(getArg)
+        #print(getArg)
         if ArgCnt <= 1:
             endArg = getArg.rfind('[')
-            print(str(getArg) + " " + str(endArg))
+            #print(str(getArg) + " " + str(endArg))
             argListOld.append(getArg[endArg+1:])
             print("[convArg]複数の引数を抜き取りました。 --> " + str(argListOld))
             break
@@ -124,22 +120,27 @@ def argument_convert(lineArg):
     #引数を変換するための一部特殊構成引数構築のためのフラグ
     distanceBuild = disMin = disMax = False
     levelBuild = levMin = levMax = False
-    selTempLoopCnt = len(argListOld)
-    convArg = "DELETED"
-    print("Oldの引数は" + str(selTempLoopCnt) + "個です。")
-    for i in range(0,selTempLoopCnt):
+    print("Oldの引数は" + str(len(argListOld)) + "個です。")
+    try:
+        argListTemp.append(re.search(r'scores=\{.\,*.*\}',getArg).group(0))
+    except:
+        print("[convArg]scores引数はありません。")
+    else:
+        print("[convArg]scores引数を取得しました。 --> " + argListTemp[0])
+        getArg = re.sub(argListTemp[0],'DELETED',getArg)
+    for i in range(0,len(argListOld)):
         selTemp = argListOld[i]
-        print(selTemp + " by " + str(argListOld) + "\nargList=" + str(argListTemp))
+        print("selTemp --> " + selTemp)
         if selTemp.startswith(("type=","name=","x=","y=","z=","dx=","dy=","dz=","scores=","tag=")):
             print("[convArg]変換不要引数です --> " + selTemp)
-            convArg = selTemp
+            argListTemp.append(selTemp)
         elif selTemp.startswith("r="):
             #r,rm,l,lmはあとから構築
             distanceBuild = True
             disMax = selTemp[2:]
         elif selTemp.startswith("rm="):
             distanceBuild = True
-            disMin = selTemp[2:]
+            disMin = selTemp[3:]
         elif selTemp.startswith("l="):
             levelBuild = True
             levMax = selTemp[2:]
@@ -148,34 +149,22 @@ def argument_convert(lineArg):
             levMin = selTemp[2:]
         elif selTemp.startswith("m="):
             print("[convArg]gamemode引数に変換します。 --> " + selTemp)
-            gmTemp = "gamemode="
-            if (re.search('!',selTemp)):
-                gmTemp += "!"
+            selTemp = str(re.sub('m=','gamemode=',selTemp))
             if selTemp.endswith("a"):
-                gmTemp += "adventure"
+                selTemp += "dventure"
             elif selTemp.endswith("c"):
-                gmTemp += "creative"
+                selTemp += "reative"
             elif selTemp.endswith("s"):
-                gmTemp += "survival"
-            convArg = gmTemp
-            print(gmTemp)
+                selTemp += "urvival"
+            argListTemp.append(selTemp)
         elif selTemp.startswith("c="):
             print("[convArg]limit引数に変換します。 --> " + selTemp)
             argListTemp.append(str(re.sub('c=','limit=',selTemp)))
         elif selTemp.startswith("DELETED"):
             selTemp = ""
         else:
-            print("[convArg]引数識別において致命的なエラー : " + selTemp)
-            exit()
-
-        try:
-            argListTemp.append(convArg)
-        except:
-            print("Failed append " + selTemp)
-        convArg = "DELETED"
-        if len(argListOld) >= 20:
-            print("argList error")
-            exit()
+            print("[convArg]例外エラー : " + selTemp)
+            argListTemp.append(selTemp)
 
     if disMin is False:
         disMin = ""
@@ -189,45 +178,38 @@ def argument_convert(lineArg):
     #r,rm,l,lmの構築
     if distanceBuild:
         print("[convArg]distance引数を生成します。 ")
-        print(str(disMin) + "/" + str(disMax))
-        disArg = "distance" + disMin + ".." + disMax
+        print("min " + str(disMin) + "/ max" + str(disMax))
+        disArg = "distance=" + disMin + ".." + disMax
         argListTemp.append(disArg)
     if levelBuild:
         print("[convArg]level引数を生成します。 ")
         levArg = "level" + levMin + ".." + levMax
         argListTemp.append(levArg)
 
-    argCnt = len(argListTemp)
     print("[convArg]現在の引数の数 --> " + str(len(argListTemp)) + "\n" + str(argListTemp))
     
-    if argList.count('DELETED') > 0:
-        print(str(argList.count('DELETED')) + "個の要素をargListから削除")
-        for i in range(0,argList.count('DELETED')):
-            argList.remove('DELETED')
-    argCnt -= 1
-    print("[convArg]argListの数 --> " + str(len(argList)) + "\n" + str(argList))
+    #めんどくさいので代入
+    argList = argListTemp
 
     argCnt = len(argList)
     print("最終的な引数の数 <-- " + str(argCnt) + "\nArglist -->" + str(argList))
     #outLineArg = "@" + selEntity + "["
     outLineArg = selEntity + "["
-    while argCnt > 2:
+    while argCnt >= 2:
         outLineArg = outLineArg + argList[argCnt-1] + ","
         argCnt -= 1
     outLineArg = outLineArg + argList[argCnt-1]
-    print("OUT:" + outLineArg)
     lineArg = lineArg.replace('SELECTOR_',outLineArg)
-    print("argconv=" + lineArg)
+    print("引数変換後出力 = " + lineArg)
     return lineArg
 #####################################
-def type_convert(cmdType,cmdConv):
-    if cmdType is 1:
+def type_convert(cmdEnume):
+    TCmode = False
 
-
-        result = cmdConv
-    return result
+    result = cmdEnume
+    return result,TCmode
 ######################################
-def list_in_execute_and_other_command(cmdLineWrite,exePos):
+def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode):
     print("[other]通常コマンドを分離させます")
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
     ALL_COMMAND = list()
@@ -254,16 +236,18 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos):
     cmdExeList.append(cmdLineWrite)
     print("[other]分離コマンドリスト --> " + str(cmdExeList))
 
-    #この関数を実行したときは引数をすでに変換した状態にして
-    #フラグを立てて引数変換を実行しないようにする
-    loopCnt = len(cmdExeList)
-    while loopCnt is not 0:
-        cmdExeList[loopCnt-1] = argument_convert(cmdExeList[loopCnt-1])
-        loopCnt -= 1
-    return cmdLineWrite
+    for i in range(0,len(cmdExeList)):
+        cmdExeList[i] = argument_convert(cmdExeList[i])
+        cmdExeList[i],TCmode = type_convert(cmdExeList[i])
+
+    print("[other]通常コマンドを分離させて、変換しました。 --> " + str(cmdExeList))
+    TCmode= False
+
+    return cmdLineWrite,TCmode
 ######################################
 def command_text_convert(cmdLine):
     multiCmd = False
+    typeConvert = True
     #execute以外にも対応させる
     #startswithは標準ライブラリのメソッ
     if cmdLine.startswith("#"):
@@ -279,81 +263,85 @@ def command_text_convert(cmdLine):
         print("コマンド構文自体の変換は必要ありません。")
         convType = 0
     print("command_text_convert <-- " + cmdLine)
-
-    if convType is not 0:
-        cntSelector = cmdLine.count('@')
-    else:
+    if cmdLine.startswith("#"):
         cntSelector = 0
-    #cntSelector=1の時の処理がない
+    else:
+        cntSelector = cmdLine.count('@')
+        print("cntSelector = " + str(cntSelector))
+
+    #セレクタの数に応じて処理分岐
     if cntSelector is 1:
         print("セレクタを検知しました。")
         cmdLine = argument_convert(cmdLine)
     elif cntSelector >= 2:
         print("複数のセレクタを検知しました。")
         #executeのeの部分の文字数目が入る。
-        exePos = cmdLine.rfind('execute')
+        try:
+            exePos = cmdLine.rfind('execute')
+        except:
+            print("tpコマンドか、scoreboard players operationによるセレクタ複数指定の可能性があります。")
         print("ループ前executeの位置:" + str(exePos) + "\n" + cmdLine)
         #複数のセレクタがある→分解しcmdExeTestに入る。
         exeConvMulti = True
         if exePos is 0:
-            cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
+            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
             print(str(cmdExeList))
             exeConvMulti = False
-        while exePos > 0 and exeConvMulti:
-            cmdLine = list_in_execute_and_other_command(cmdLine,exePos)
+        while exePos >= 1 and exeConvMulti:
+            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
             cmdLine = cmdLine[:exePos]
             exePos = cmdLine.rfind('execute')
             if exePos is 0:
                 print("executeコマンドを二個以上検知しました。")
                 multiCmd = True
                 break
-        #list_in_execute_and_other_command が引数変換、execute分解まで実行するようになった
+        #list_in_execute_and_other_command が引数変換、execute分解まで実行する
         print("List --> " + str(cmdExeList))
         multiCmd = True
 
-    #上記execute分解が実行時、すでに変換されているためmultiCmdフラグが立ちこのコマンドは実行されない。
-    #分解の必要がなかった場合は単に引数を変換するのみとして下記を実行
     if convType is not 0 and re.search('\@', cmdLine) and multiCmd is None:
         if re.search(r'\@.\[', cmdLine):
             print("このコマンドは引数付きセレクタがあります。")
             cmdLine = argument_convert(cmdLine)
         else:
             print("このコマンドはセレクタがありますが変換は不要です。")
-            
-    if convType is not 0 and multiCmd is False:
-        convResult = type_convert(convType,cmdLine)
-    #↓multiCmdフラグが立っているとき、配列のセレクタそれぞれ変換して最終的に構成する
-    elif multiCmd:
-        cmdLineExe = list()
-        exeListCnt = len(cmdExeList)
-        while exeListCnt is not 0:
-            cmdExeBuild = list()
-            cmdExe_cmdLine = cmdExeList.pop(0)
-            exeListCnt = len(cmdExeList)
-            cmdExe_cntSelector = cmdExe_cmdLine.count('@')
-            print("[cmdExe]cmdLine=" + cmdExe_cmdLine)
-            if re.search(r'\@.\[', cmdExe_cmdLine):
-                print("[cmdExe]セレクタを変換。")
-                buildConv = argument_convert(cmdExe_cmdLine)
-                cmdExeBuild.append(buildConv)
-                print("[cmdExe]セレクタ変換後 --> " + buildConv)
-            else:
-                print("[cmdExe]セレクタがありますが変換は不要です。")
-                cmdExeBuild.append(cmdExe_cmdLine)
+       
+#    if convType is not 0 and multiCmd is False:
+#        convResult,typeConvert = type_convert(convType)
+#    #↓multiCmdフラグが立っているとき、配列のセレクタそれぞれ変換して最終的に構成する
+#    elif multiCmd:
+#        cmdLineExe = list()
+#        exeListCnt = len(cmdExeList)
+#        while exeListCnt is not 0:
+#            cmdExeBuild = list()
+#            cmdExe_cmdLine = cmdExeList.pop(0)
+#            exeListCnt = len(cmdExeList)
+#            cmdExe_cntSelector = cmdExe_cmdLine.count('@')
+#            print("[cmdExe]cmdLine=" + cmdExe_cmdLine)
+#            if re.search(r'\@.\[', cmdExe_cmdLine):
+#                print("[cmdExe]セレクタを変換。")
+#                buildConv = argument_convert(cmdExe_cmdLine)
+#                cmdExeBuild.append(buildConv)
+#                print("[cmdExe]セレクタ変換後 --> " + buildConv)
+#            else:
+#                print("[cmdExe]セレクタがありますが変換は不要です。")
+#                cmdExeBuild.append(cmdExe_cmdLine)
 
-        print("[cmdExe]分割されたコマンドを構築します。 " + str(cmdExeBuild))
-        exeListCnt = len(cmdExeBuild)
-        exeListCntMax = exeListCnt
-        convResult = ""
-        while exeListCnt is not 0:
-            print(str(exeListCntMax-exeListCnt) + "|||" + convResult)
-            convResult = convResult + cmdExeBuild.pop(0)[exeListCntMax-exeListCnt]
-            exeListCnt = len(cmdExeBuild)
-        print(convResult)
-    else:
-        convResult = cmdLine
-        #convTypeはこれからパターンが増える
-        multiCmd = False
+#        print("[cmdExe]分割されたコマンドを構築します。 " + str(cmdExeBuild))
+#        exeListCnt = len(cmdExeBuild)
+#        exeListCntMax = exeListCnt
+#        convResult = ""
+#        for i in range(1,len(cmdExeBuild)):
+#            convResult = convResult + cmdExeBuild.pop(0)[exeListCntMax-i]
+#    else:
+#        convResult = cmdLine
+#        #convTypeはこれからパターンが増える
+#        multiCmd = False
+# ^^^ これらはlist_in_execute_and_other_commandが代理実行する
+
+    if typeConvert:
+        convResult,typeConvert = type_convert(cmdLine)
+    
     return convResult
 ######################################
 
@@ -370,7 +358,11 @@ for i in range(0,cnt):
     print("INPUT-" + lineText)
     if lineText:
         print("変換処理を実行します <-- " + lineText)
-        outText.write(command_text_convert(lineText))
+        cnv = str(command_text_convert(lineText))
+        print("cnv = " + cnv)
+        if re.search('\n', cnv) is None:
+            cnv += "\n"
+        outText.write(cnv)
     else:
         print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
         print("path : " + srcDir + "  filename : " + dstPath +
