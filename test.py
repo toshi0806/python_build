@@ -234,13 +234,17 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode):
         cmdLineWrite = cmdLineWrite[:exePos-1]
         exeCnt -= 1
     cmdExeList.append(cmdLineWrite)
-    print("[other]分離コマンドリスト --> " + str(cmdExeList))
+    print("[other]分離コマンドリスト --> " + str(cmdLineWrite))
 
-    for i in range(0,len(cmdExeList)):
-        cmdExeList[i] = argument_convert(cmdExeList[i])
-        cmdExeList[i],TCmode = type_convert(cmdExeList[i])
+    cmdLineWrite = ""
+    for i in range(len(cmdExeList),0,-1):
+        cmdLineWrite += argument_convert(cmdExeList[i-1])
+        if i >= 1:
+            cmdLineWrite += " "
 
-    print("[other]通常コマンドを分離させて、変換しました。 --> " + str(cmdExeList))
+    print("[other]通常コマンドを分離させて、変換しました。 --> " + str(cmdLineWrite))
+    
+    cmdLineWrite,TCmode = type_convert(cmdLineWrite)
     TCmode= False
 
     return cmdLineWrite,TCmode
@@ -285,18 +289,14 @@ def command_text_convert(cmdLine):
         exeConvMulti = True
         if exePos is 0:
             cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
-            print(str(cmdExeList))
             exeConvMulti = False
+            print("executeコマンドを検知しませんでした。")
         while exePos >= 1 and exeConvMulti:
             cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
-            cmdLine = cmdLine[:exePos]
-            exePos = cmdLine.rfind('execute')
-            if exePos is 0:
-                print("executeコマンドを二個以上検知しました。")
-                multiCmd = True
-                break
+            print("executeコマンドを1個以上検知しました。")
+            multiCmd = True
+
         #list_in_execute_and_other_command が引数変換、execute分解まで実行する
-        print("List --> " + str(cmdExeList))
         multiCmd = True
 
     if convType is not 0 and re.search('\@', cmdLine) and multiCmd is None:
@@ -305,42 +305,11 @@ def command_text_convert(cmdLine):
             cmdLine = argument_convert(cmdLine)
         else:
             print("このコマンドはセレクタがありますが変換は不要です。")
-       
-#    if convType is not 0 and multiCmd is False:
-#        convResult,typeConvert = type_convert(convType)
-#    #↓multiCmdフラグが立っているとき、配列のセレクタそれぞれ変換して最終的に構成する
-#    elif multiCmd:
-#        cmdLineExe = list()
-#        exeListCnt = len(cmdExeList)
-#        while exeListCnt is not 0:
-#            cmdExeBuild = list()
-#            cmdExe_cmdLine = cmdExeList.pop(0)
-#            exeListCnt = len(cmdExeList)
-#            cmdExe_cntSelector = cmdExe_cmdLine.count('@')
-#            print("[cmdExe]cmdLine=" + cmdExe_cmdLine)
-#            if re.search(r'\@.\[', cmdExe_cmdLine):
-#                print("[cmdExe]セレクタを変換。")
-#                buildConv = argument_convert(cmdExe_cmdLine)
-#                cmdExeBuild.append(buildConv)
-#                print("[cmdExe]セレクタ変換後 --> " + buildConv)
-#            else:
-#                print("[cmdExe]セレクタがありますが変換は不要です。")
-#                cmdExeBuild.append(cmdExe_cmdLine)
-
-#        print("[cmdExe]分割されたコマンドを構築します。 " + str(cmdExeBuild))
-#        exeListCnt = len(cmdExeBuild)
-#        exeListCntMax = exeListCnt
-#        convResult = ""
-#        for i in range(1,len(cmdExeBuild)):
-#            convResult = convResult + cmdExeBuild.pop(0)[exeListCntMax-i]
-#    else:
-#        convResult = cmdLine
-#        #convTypeはこれからパターンが増える
-#        multiCmd = False
-# ^^^ これらはlist_in_execute_and_other_commandが代理実行する
 
     if typeConvert:
         convResult,typeConvert = type_convert(cmdLine)
+    else:
+        convResult = cmdLine
     
     return convResult
 ######################################
@@ -353,12 +322,13 @@ textRead.close()
 cnt = len(beforeText)
 print("変換テキストを読み込みました。")
 for i in range(0,cnt):
-    lineText = beforeText[i]
+    lineText = re.sub('\n','',beforeText[i])
 
     print("INPUT-" + lineText)
     if lineText:
         print("変換処理を実行します <-- " + lineText)
         cnv = str(command_text_convert(lineText))
+        #空白行があると処理が終了してしまう問題があるので修正する
         print("cnv = " + cnv)
         if re.search('\n', cnv) is None:
             cnv += "\n"
