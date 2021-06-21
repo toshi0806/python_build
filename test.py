@@ -52,15 +52,18 @@ if TestFind:
 else:
     print("新規にファイルを作成します。\n" + dstPath)
 
-inText = open(dstPath, 'a', encoding='UTF-8')
+
 # タイムスタンプ取得用
 dt_now = datetime.datetime.now()
 dateText = dt_now.strftime("%Y/%m/%d %H:%M:%S")
 
+inText = open(dstPath, 'a', encoding='UTF-8')
 inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
 
-outText = open(dstPath, 'a', encoding='UTF-8')
+ALL_COMMAND = list()
+ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','tell ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
+ALL_COMMAND_CNT = len(ALL_COMMAND)
 
 ######################################
 def argument_convert(lineArg):
@@ -120,6 +123,8 @@ def argument_convert(lineArg):
     #引数を変換するための一部特殊構成引数構築のためのフラグ
     distanceBuild = disMin = disMax = False
     levelBuild = levMin = levMax = False
+    xrotBuild = xrotMin = xrotMax = False
+    yrotBuild = yrotMin = yrotMax = False
     print("Oldの引数は" + str(len(argListOld)) + "個です。")
     try:
         argListTemp.append(re.search(r'scores=\{.\,*.*\}',getArg).group(0))
@@ -135,7 +140,6 @@ def argument_convert(lineArg):
             print("[convArg]変換不要引数です --> " + selTemp)
             argListTemp.append(selTemp)
         elif selTemp.startswith("r="):
-            #r,rm,l,lmはあとから構築
             distanceBuild = True
             disMax = selTemp[2:]
         elif selTemp.startswith("rm="):
@@ -147,6 +151,18 @@ def argument_convert(lineArg):
         elif selTemp.startswith("lm="):
             levelBuild = True
             levMin = selTemp[2:]
+        elif selTemp.startswith("rx="):
+            xrotBuild = True
+            xrotMax = selTemp[3:]
+        elif selTemp.startswith("rxm="):
+            xrotBuild = True
+            xrotMin = selTemp[4:]
+        elif selTemp.startswith("ry="):
+            yrotBuild = True
+            yrotMax = selTemp[3:]
+        elif selTemp.startswith("rym="):
+            yrotBuild = True
+            yrotMin = selTemp[4:]
         elif selTemp.startswith("m="):
             print("[convArg]gamemode引数に変換します。 --> " + selTemp)
             selTemp = str(re.sub('m=','gamemode=',selTemp))
@@ -174,17 +190,31 @@ def argument_convert(lineArg):
         levMin = ""
     if levMax is False:
         levMax = ""
+    if xrotMin is False:
+        xrotMin = ""
+    if xrotMax is False:
+        xrotMax = ""
+    if yrotMin is False:
+        yrotMin = ""
+    if yrotMax is False:
+        yrotMax = ""
 
-    #r,rm,l,lmの構築
     if distanceBuild:
         print("[convArg]distance引数を生成します。 ")
-        print("min " + str(disMin) + "/ max" + str(disMax))
         disArg = "distance=" + disMin + ".." + disMax
         argListTemp.append(disArg)
     if levelBuild:
         print("[convArg]level引数を生成します。 ")
         levArg = "level" + levMin + ".." + levMax
         argListTemp.append(levArg)
+    if xrotBuild:
+        print("[convArg]x_rotation引数を生成します。 ")
+        xrotArg = "x_rotation=" + xrotMin + ".." + xrotMax
+        argListTemp.append(xrotArg)
+    if yrotBuild:
+        print("[convArg]y_rotation引数を生成します。 ")
+        yrotArg = "y_rotation=" + yrotMin + ".." + yrotMax
+        argListTemp.append(yrotArg)
 
     print("[convArg]現在の引数の数 --> " + str(len(argListTemp)) + "\n" + str(argListTemp))
     
@@ -203,29 +233,61 @@ def argument_convert(lineArg):
     print("引数変換後出力 = " + lineArg)
     return lineArg
 #####################################
-def type_convert(cmdEnume):
+def type_convert(cmdEnume,convType):
     TCmode = False
+    tcList = list()
+    tcList.clear
+    getSelList = list()
+    getSelList.clear()
+    tcSelectorCnt = cmdEnume.count(r'\@.')
+    for i in range(0,tcSelectorCnt-1):
+        try:
+            getSelList.append(re.search(r'\@.\[(.+)\]',cmdEnume).group(0))
+        except:
+            getSelList.append(re.search(r'\@.',cmdEnume).group(0))
+        cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
+    print("type_convert / getSelList = " + str(getSelList) + " tcSelectorCnt = " + str(tcSelectorCnt))
+
+    if convType == 1:
+        print("[type_convert]execute 通常コマンドを分離させます")
+        #ALL_COMMANDと繰り返し比較し、分割したらtcListへ
+        for i in range(ALL_COMMAND_CNT,1,-1):
+            separatePos = cmdEnume.rfind(ALL_COMMAND[i-1])
+            if separatePos is not -1:
+                print("[type_convert]分離コマンド --> " + ALL_COMMAND[i-1] + "/ separatePos = " + str(separatePos))
+                break
+        tcList.append(cmdEnume[separatePos:])
+        cmdEnume = cmdEnume[:separatePos-1]
+        #分離させた通常コマンドをListに入れてその分を削除
+        print("[type_convert]通常コマンド分離後 --> " + str(tcList))
+        enumeExeCnt = cmdEnume.count('execute')
+        while enumeExeCnt >= 2:
+            separatePos = cmdEnume.rfind('execute')
+            print("[type_convert]execute重複抜き取り,exeCnt --> " + cmdEnume[separatePos:])
+            tcList.append(cmdEnume[separatePos:])
+            cmdEnume = cmdEnume[:separatePos-1]
+            enumeExeCnt -= 1
+        #cmdEnume = re.sub('execute','execute as',cmdEnume)
+    else:
+        print("[type_convert]変換は必要ありません。")
 
     result = cmdEnume
     return result,TCmode
 ######################################
-def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode):
+def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
     print("[other]通常コマンドを分離させます")
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
-    ALL_COMMAND = list()
-    ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
-    ALL_COMMAND_CNT = len(ALL_COMMAND)
-    while ALL_COMMAND_CNT is not 0:
-        exePos = cmdLineWrite.rfind(ALL_COMMAND[ALL_COMMAND_CNT-1])
-        ALL_COMMAND_CNT -= 1
+    for i in range(ALL_COMMAND_CNT,1,-1):
+        exePos = cmdLineWrite.rfind(ALL_COMMAND[i-1])
         if exePos is not -1:
-            print("[other]分離コマンド --> " + ALL_COMMAND[ALL_COMMAND_CNT])
+            print("[other]分離コマンド --> " + ALL_COMMAND[i-1] + "/ exePos = " + str(exePos))
             break
+    cmdExeList.clear()
     cmdExeList.append(cmdLineWrite[exePos:])
     cmdLineWrite = cmdLineWrite[:exePos-1]
     #分離させた通常コマンドをListに入れてその分を削除
     
-    print("[other]通常コマンド分離後 --> " + cmdExeList[0])
+    print("[other]通常コマンド分離後 --> " + str(cmdExeList))
     exeCnt = cmdLineWrite.count('execute')
     while exeCnt >= 2:
         exePos = cmdLineWrite.rfind('execute')
@@ -244,7 +306,7 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode):
 
     print("[other]通常コマンドを分離させて、変換しました。 --> " + str(cmdLineWrite))
     
-    cmdLineWrite,TCmode = type_convert(cmdLineWrite)
+    cmdLineWrite,TCmode = type_convert(cmdLineWrite,convType)
     TCmode= False
 
     return cmdLineWrite,TCmode
@@ -288,11 +350,11 @@ def command_text_convert(cmdLine):
         #複数のセレクタがある→分解しcmdExeTestに入る。
         exeConvMulti = True
         if exePos is 0:
-            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
+            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert,convType)
             exeConvMulti = False
             print("executeコマンドを検知しませんでした。")
-        while exePos >= 1 and exeConvMulti:
-            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert)
+        if exePos >= 1 and exeConvMulti:
+            cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert,convType)
             print("executeコマンドを1個以上検知しました。")
             multiCmd = True
 
@@ -307,7 +369,7 @@ def command_text_convert(cmdLine):
             print("このコマンドはセレクタがありますが変換は不要です。")
 
     if typeConvert:
-        convResult,typeConvert = type_convert(cmdLine)
+        convResult,typeConvert = type_convert(cmdLine,convType)
     else:
         convResult = cmdLine
     
@@ -322,19 +384,26 @@ textRead.close()
 cnt = len(beforeText)
 print("変換テキストを読み込みました。")
 for i in range(0,cnt):
-    lineText = re.sub('\n','',beforeText[i])
+    beforeText[i] = re.sub('\n','',beforeText[i])
+    beforeText[i] = re.sub('\ufeff','',beforeText[i])
+    if beforeText[i] == '':
+        beforeText[i] = ' '
 
-    print("INPUT-" + lineText)
-    if lineText:
-        print("変換処理を実行します <-- " + lineText)
-        cnv = str(command_text_convert(lineText))
-        #空白行があると処理が終了してしまう問題があるので修正する
-        print("cnv = " + cnv)
-        if re.search('\n', cnv) is None:
-            cnv += "\n"
-        outText.write(cnv)
+for i in range(0,cnt):
+    lineText = re.sub('\n','',beforeText[i])
+    print("変換処理を実行します <-- " + lineText)
+    if lineText != '':
+        beforeText[i] = str(command_text_convert(lineText) + "\n")
     else:
-        print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
-        print("path : " + srcDir + "  filename : " + dstPath +
-              "\nfullPath : " + srcDir + "/" + dstPath)
-        exit()
+        beforeText[i] = " \n"
+    #空白行があると処理が終了してしまう問題があるので修正する
+    print("result = " + beforeText[i])
+
+outText = open(dstPath, 'a', encoding='UTF-8')
+outText.writelines(beforeText)
+outText.close
+
+print("変換が終了しました。UTF-8Nで再読込を行って保存してください。")
+print("path : " + srcDir + "  filename : " + dstPath +
+      "\nfullPath : " + srcDir + "/" + dstPath)
+exit()

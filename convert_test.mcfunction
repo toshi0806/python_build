@@ -30,12 +30,10 @@ execute @a[m=!a,scores={test987j9uq34=!7..23}] ~ ~ ~ say 基本羅列変換9
 
 #追加分
 tp @a[m=!a,scores={test987j9uq34=!7..23}] 0 8 0
+execute @a[m=!a,c=5,l=7000,lm=3,ry=180,rym=-180] ~ ~ ~ execute @p[lm=0,l=99] ~ ~ ~ tell @a[r=10] 寿司食べたいんですけど、注文いいですか？ピザ一枚。
 
 scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
-
-
-
 
 #test
 #空白行があっても処理でき
