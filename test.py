@@ -235,8 +235,9 @@ def argument_convert(lineArg):
 #####################################
 def type_convert(cmdEnume,convType):
     TCmode = False
-    tcList = list()
-    tcList.clear
+    #tcList配列をexecuteResultCmd変数に置き換えた executeコマンドの配列はseparateExecute配列
+    separateExecute = list()
+    separateExecute.clear()
     getSelList = list()
     getSelList.clear()
     tcSelectorCnt = cmdEnume.count(r'\@.')
@@ -256,18 +257,27 @@ def type_convert(cmdEnume,convType):
             if separatePos is not -1:
                 print("[type_convert]分離コマンド --> " + ALL_COMMAND[i-1] + "/ separatePos = " + str(separatePos))
                 break
-        tcList.append(cmdEnume[separatePos:])
+        executeResultCmd = cmdEnume[separatePos:]
         cmdEnume = cmdEnume[:separatePos-1]
         #分離させた通常コマンドをListに入れてその分を削除
-        print("[type_convert]通常コマンド分離後 --> " + str(tcList))
+        print("[type_convert]通常コマンド分離後 --> " + str(executeResultCmd))
         enumeExeCnt = cmdEnume.count('execute')
         while enumeExeCnt >= 2:
             separatePos = cmdEnume.rfind('execute')
-            print("[type_convert]execute重複抜き取り,exeCnt --> " + cmdEnume[separatePos:])
-            tcList.append(cmdEnume[separatePos:])
+            print("[type_convert]execute抜き取り --> " + cmdEnume[separatePos:])
+            separateExecute.append(cmdEnume[separatePos:])
             cmdEnume = cmdEnume[:separatePos-1]
             enumeExeCnt -= 1
+        separateExecute.append(cmdEnume)
         #cmdEnume = re.sub('execute','execute as',cmdEnume)
+        cmdEnume = "execute "
+        for i in range(0,len(separateExecute)):
+            try:
+                asEntitySelector = re.search(r'\@.\[(.+)\]',separateExecute[i]).group(0)
+            except:
+                asEntitySelector = re.search(r'\@.',separateExecute[i]).group(0)
+            cmdEnume += "as " + asEntitySelector + " at @s "
+        cmdEnume += "run " + executeResultCmd
     else:
         print("[type_convert]変換は必要ありません。")
 
@@ -314,8 +324,7 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
 def command_text_convert(cmdLine):
     multiCmd = False
     typeConvert = True
-    #execute以外にも対応させる
-    #startswithは標準ライブラリのメソッ
+    #startswithは標準ライブラリのメソッド
     if cmdLine.startswith("#"):
         print("コメント行です。")
         convType = 0
