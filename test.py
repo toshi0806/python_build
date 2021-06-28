@@ -252,7 +252,7 @@ def type_convert(cmdEnume,convType):
     if convType == 1:
         print("[type_convert]execute 通常コマンドを分離させます")
         #ALL_COMMANDと繰り返し比較し、分割したらtcListへ
-        for i in range(ALL_COMMAND_CNT,1,-1):
+        for i in range(ALL_COMMAND_CNT,0,-1):
             separatePos = cmdEnume.rfind(ALL_COMMAND[i-1])
             if separatePos is not -1:
                 print("[type_convert]分離コマンド --> " + ALL_COMMAND[i-1] + "/ separatePos = " + str(separatePos))
@@ -287,7 +287,7 @@ def type_convert(cmdEnume,convType):
 def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
     print("[other]通常コマンドを分離させます")
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
-    for i in range(ALL_COMMAND_CNT,1,-1):
+    for i in range(ALL_COMMAND_CNT,0,-1):
         exePos = cmdLineWrite.rfind(ALL_COMMAND[i-1])
         if exePos is not -1:
             print("[other]分離コマンド --> " + ALL_COMMAND[i-1] + "/ exePos = " + str(exePos))

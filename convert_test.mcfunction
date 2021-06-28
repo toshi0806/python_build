@@ -36,4 +36,5 @@ scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
 
 #test
-#空白行があっても処理でき
+#空白行があっても
+execute @e[tag=select,scores={bp_time2=..0},type=armor_stand] ~ ~ ~ clear @a[x=-30,y=6,z=-125,dx=50,dy=10,dz=50,m=a]

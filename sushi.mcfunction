@@ -1,4 +1,4 @@
-#NEKOYAMA Converter 2021/06/28 13:41:21 converted
+#NEKOYAMA Converter 2021/06/28 21:27:01 converted
 #統合版用にfunctionを作成し動作を確認する。
 #コンバートスクリプトにかけても問題なく動作するかをチェックする。
 #コンバート前をconvert_test.mcfunctionとし、コンバート後をconvert_after.mcfunctionとする。
@@ -37,4 +37,5 @@ scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
  
 #test
-#空白行があっても処理でき
+#空白行があっても
+execute as @e[tag=select,scores={bp_time2=..0},type=armor_stand] at @s run clear @a[x=-30,y=6,z=-125,dx=50,dy=10,dz=50,gamemode=adventure] 
