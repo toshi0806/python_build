@@ -1,4 +1,4 @@
-#NEKOYAMA Converter 2021/06/30 00:27:29 converted
+#NEKOYAMA Converter 2021/06/30 00:38:37 converted
 #統合版用にfunctionを作成し動作を確認する。
 #コンバートスクリプトにかけても問題なく動作するかをチェックする。
 #コンバート前をconvert_test.mcfunctionとし、コンバート後をconvert_after.mcfunctionとする。
@@ -38,3 +38,4 @@ execute as @e[tag=select,scores={bp_time2=..0},type=armor_stand] ~ ~ ~ clear @a[
 xp add @e[type=player] -20 points 
 xp add @a[level=30000..32767] 32768 levels 
 xp add @r -503 levels 
+xp add @a[distance=..50,scores={test987j9uq34=3..4}] 8096 levels 
