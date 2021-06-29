@@ -4,3 +4,4 @@ convert_test.mcfunction 変換プログラムで試しに変換する為のフ�
 MINECRAFT_BUILD内ファイル 実際に変換するためのファイルの一部
 convert.sh test.pyを開発するための元のアルゴリズム的なもの(bash)
 Untitled-1.py 一部分だけの検証と動作確認
+sushi.mcfunction convert_testを変換実行した結果を出力したファイル（現時点での）
