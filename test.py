@@ -68,7 +68,7 @@ ALL_COMMAND_CNT = len(ALL_COMMAND)
 ######################################
 def argument_convert(lineArg):
     argChecker = re.search(r'\@.\[',lineArg)
-    if argChecker is None:
+    if argChecker == None:
         print("[引数変換]引数付きセレクタを判定出来ませんでした。無変換で続行します。")
         print("CMD:" + lineArg)
         return lineArg
@@ -99,7 +99,7 @@ def argument_convert(lineArg):
     posArg = getArg.rfind(',')
     #scores引数内コロンを区別するため、あらかじめargListOldに追加しDELETEDとして続行する
 
-    if posArg is -1:
+    if posArg == -1:
         argListOld.append(getArg[3:])
         argFlag = False
         print("[convArg]引数が一つのため、抜き取りました。 --> " + str(argListOld))
@@ -182,21 +182,21 @@ def argument_convert(lineArg):
             print("[convArg]例外エラー : " + selTemp)
             argListTemp.append(selTemp)
 
-    if disMin is False:
+    if disMin == False:
         disMin = ""
-    if disMax is False:
+    if disMax == False:
         disMax = ""
-    if levMin is False:
+    if levMin == False:
         levMin = ""
-    if levMax is False:
+    if levMax == False:
         levMax = ""
-    if xrotMin is False:
+    if xrotMin == False:
         xrotMin = ""
-    if xrotMax is False:
+    if xrotMax == False:
         xrotMax = ""
-    if yrotMin is False:
+    if yrotMin == False:
         yrotMin = ""
-    if yrotMax is False:
+    if yrotMax == False:
         yrotMax = ""
 
     if distanceBuild:
@@ -235,26 +235,38 @@ def argument_convert(lineArg):
 #####################################
 def type_convert(cmdEnume,convType):
     TCmode = False
+    if convType <= 0:
+        result = cmdEnume
+        return result,TCmode
+
     #tcList配列をexecuteResultCmd変数に置き換えた executeコマンドの配列はseparateExecute配列
     separateExecute = list()
     separateExecute.clear()
     getSelList = list()
     getSelList.clear()
-    tcSelectorCnt = cmdEnume.count(r'\@.')
-    for i in range(0,tcSelectorCnt-1):
+    tcSelectorCnt = cmdEnume.count('@')
+    for i in range(0,tcSelectorCnt):
         try:
             getSelList.append(re.search(r'\@.\[(.+)\]',cmdEnume).group(0))
         except:
-            getSelList.append(re.search(r'\@.',cmdEnume).group(0))
-        cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
+            try:
+                getSelList.append(re.search(r'\@.',cmdEnume).group(0))
+            except:
+                print("セレクタの抽出をスルーしました。")
+                break
+            else:
+                cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
+        else:
+            cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
     print("type_convert / getSelList = " + str(getSelList) + " tcSelectorCnt = " + str(tcSelectorCnt))
 
+    #convType=1はexecuteコマンドに対応
     if convType == 1:
         print("[type_convert]execute 通常コマンドを分離させます")
         #ALL_COMMANDと繰り返し比較し、分割したらtcListへ
         for i in range(ALL_COMMAND_CNT,0,-1):
             separatePos = cmdEnume.rfind(ALL_COMMAND[i-1])
-            if separatePos is not -1:
+            if separatePos != -1:
                 print("[type_convert]分離コマンド --> " + ALL_COMMAND[i-1] + "/ separatePos = " + str(separatePos))
                 break
         executeResultCmd = cmdEnume[separatePos:]
@@ -269,19 +281,26 @@ def type_convert(cmdEnume,convType):
             cmdEnume = cmdEnume[:separatePos-1]
             enumeExeCnt -= 1
         separateExecute.append(cmdEnume)
-        #cmdEnume = re.sub('execute','execute as',cmdEnume)
-        cmdEnume = "execute "
+
+        #execute以外も、SELECTOR_代入は最後実行する。
+        result = "execute "
         for i in range(0,len(separateExecute)):
-            try:
-                asEntitySelector = re.search(r'\@.\[(.+)\]',separateExecute[i]).group(0)
-            except:
-                asEntitySelector = re.search(r'\@.',separateExecute[i]).group(0)
-            cmdEnume += "as " + asEntitySelector + " at @s "
-        cmdEnume += "run " + executeResultCmd
+            result += "as " + getSelList[i] + " at @s "
+        result += "run " + executeResultCmd
+
+    #convType=1はxpコマンドに対応
+    if convType == 2:
+        result = 'xp add ' + getSelList[0]
+        result += re.search(r'\s.?[0-9]+',cmdEnume).group(0)
+        if cmdEnume.count('l ') == 1:
+            cmdEnume.replace('l ',' ')
+            result += ' levels '
+        else:
+            result += ' points '
+        
     else:
         print("[type_convert]変換は必要ありません。")
 
-    result = cmdEnume
     return result,TCmode
 ######################################
 def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
@@ -289,7 +308,7 @@ def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
     for i in range(ALL_COMMAND_CNT,0,-1):
         exePos = cmdLineWrite.rfind(ALL_COMMAND[i-1])
-        if exePos is not -1:
+        if exePos != -1:
             print("[other]分離コマンド --> " + ALL_COMMAND[i-1] + "/ exePos = " + str(exePos))
             break
     cmdExeList.clear()
@@ -334,6 +353,9 @@ def command_text_convert(cmdLine):
     elif cmdLine.startswith("execute"):
         print("executeコマンドです。")
         convType = 1
+    elif cmdLine.startswith("experience") or cmdLine.startswith("xp"):
+        print("xpコマンドもしくはexperienceコマンドです。")
+        convType = 2
     else:
         print("コマンド構文自体の変換は必要ありません。")
         convType = 0
@@ -345,7 +367,7 @@ def command_text_convert(cmdLine):
         print("cntSelector = " + str(cntSelector))
 
     #セレクタの数に応じて処理分岐
-    if cntSelector is 1:
+    if cntSelector == 1:
         print("セレクタを検知しました。")
         cmdLine = argument_convert(cmdLine)
     elif cntSelector >= 2:
@@ -358,7 +380,7 @@ def command_text_convert(cmdLine):
         print("ループ前executeの位置:" + str(exePos) + "\n" + cmdLine)
         #複数のセレクタがある→分解しcmdExeTestに入る。
         exeConvMulti = True
-        if exePos is 0:
+        if exePos == 0:
             cmdLine,typeConvert = list_in_execute_and_other_command(cmdLine,exePos,typeConvert,convType)
             exeConvMulti = False
             print("executeコマンドを検知しませんでした。")
@@ -370,7 +392,7 @@ def command_text_convert(cmdLine):
         #list_in_execute_and_other_command が引数変換、execute分解まで実行する
         multiCmd = True
 
-    if convType is not 0 and re.search('\@', cmdLine) and multiCmd is None:
+    if convType != 0 and re.search('\@', cmdLine) and multiCmd == None:
         if re.search(r'\@.\[', cmdLine):
             print("このコマンドは引数付きセレクタがあります。")
             cmdLine = argument_convert(cmdLine)
