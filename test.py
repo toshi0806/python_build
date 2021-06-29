@@ -304,7 +304,7 @@ def type_convert(cmdEnume,convType):
     return result,TCmode
 ######################################
 def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
-    print("[other]通常コマンドを分離させます")
+    print("[other]通常コマンドを分離させます。")
     #ALL_COMMANDと繰り返し比較し、分割したらcmdExeListへ
     for i in range(ALL_COMMAND_CNT,0,-1):
         exePos = cmdLineWrite.rfind(ALL_COMMAND[i-1])
