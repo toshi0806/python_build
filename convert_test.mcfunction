@@ -31,10 +31,9 @@ execute @a[m=!a,scores={test987j9uq34=!7..23}] ~ ~ ~ say 基本羅列変換9
 #追加分
 tp @a[m=!a,scores={test987j9uq34=!7..23}] 0 8 0
 execute @a[m=!a,c=5,l=7000,lm=3,ry=180,rym=-180] ~ ~ ~ execute @p[lm=0,l=99] ~ ~ ~ tell @a[r=10] 寿司食べたいんですけど、注文いいですか？ピザ一枚。
-
 scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
-
-#test
-#空白行があっても
 execute @e[tag=select,scores={bp_time2=..0},type=armor_stand] ~ ~ ~ clear @a[x=-30,y=6,z=-125,dx=50,dy=10,dz=50,m=a]
+xp -20 @e[type=player]
+xp 32768l @a[lm=30000,l=32767]
+xp -503l @r
