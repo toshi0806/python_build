@@ -238,27 +238,42 @@ def type_convert(cmdEnume,convType):
     if convType <= 0:
         result = cmdEnume
         return result,TCmode
-
     #tcList配列をexecuteResultCmd変数に置き換えた executeコマンドの配列はseparateExecute配列
     separateExecute = list()
     separateExecute.clear()
     getSelList = list()
     getSelList.clear()
-    tcSelectorCnt = cmdEnume.count('@')
+    tempSeparate = list()
+    tempSeparate.clear()
+
+    tcSelectorCnt = tcSelectorCnt_afterSeparate = cmdEnume.count('@')
+    while tcSelectorCnt_afterSeparate >= 2:
+        tempSeparate.append(cmdEnume[cmdEnume.rfind('@'):])
+        cmdEnume = cmdEnume[:cmdEnume.rfind('@')]
+        tcSelectorCnt_afterSeparate = cmdEnume.count('@')
+        if tcSelectorCnt_afterSeparate == 1:
+            tempSeparate.append(cmdEnume)
+    tempSeparate = sorted(tempSeparate, reverse=True)
+    if tcSelectorCnt < 2:
+        tempSeparate.append(cmdEnume)
+    cmdEnume = ""
+
+    print("tempSeparate = " + str(tempSeparate))
     for i in range(0,tcSelectorCnt):
         try:
-            getSelList.append(re.search(r'\@.\[(.+)\]',cmdEnume).group(0))
+            getSelList.append(re.search(r'\@.\[(.+)\]',tempSeparate[i]).group(0))
         except:
             try:
-                getSelList.append(re.search(r'\@.',cmdEnume).group(0))
+                getSelList.append(re.search(r'\@.',tempSeparate[i]).group(0))
             except:
                 print("セレクタの抽出をスルーしました。")
                 break
             else:
-                cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
+                tempSeparate[i] = tempSeparate[i].replace(getSelList[i],'SELECTOR_')
         else:
-            cmdEnume = cmdEnume.replace(getSelList[i],'SELECTOR_')
-    print("type_convert / getSelList = " + str(getSelList) + " tcSelectorCnt = " + str(tcSelectorCnt))
+            tempSeparate[i] = tempSeparate[i].replace(getSelList[i],'SELECTOR_')
+        cmdEnume += tempSeparate[i]
+    print("type_convert / getSelList = " + str(getSelList) + " tcSelectorCnt = " + str(tcSelectorCnt) + "\ncmdEnume = " + str(cmdEnume))
 
     #convType=1はexecuteコマンドに対応
     if convType == 1:
@@ -286,6 +301,7 @@ def type_convert(cmdEnume,convType):
         result = "execute "
         for i in range(0,len(separateExecute)):
             result += "as " + getSelList[i] + " at @s "
+        executeResultCmd = executeResultCmd.replace('SELECTOR_',getSelList[len(getSelList)-1])
         result += "run " + executeResultCmd
 
     #convType=1はxpコマンドに対応
@@ -297,10 +313,9 @@ def type_convert(cmdEnume,convType):
             result += ' levels '
         else:
             result += ' points '
-        
     else:
         print("[type_convert]変換は必要ありません。")
-
+    print("type_convert / result = " + result)
     return result,TCmode
 ######################################
 def list_in_execute_and_other_command(cmdLineWrite,exePos,TCmode,convType):
