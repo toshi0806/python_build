@@ -1,4 +1,4 @@
-#NEKOYAMA Converter 2021/06/30 00:38:37 converted
+#NEKOYAMA Converter 2021/07/01 22:07:23 converted
 #統合版用にfunctionを作成し動作を確認する。
 #コンバートスクリプトにかけても問題なく動作するかをチェックする。
 #コンバート前をconvert_test.mcfunctionとし、コンバート後をconvert_after.mcfunctionとする。
@@ -31,11 +31,11 @@ execute as @a[gamemode=!adventure,scores={test987j9uq34=!7..23}] at @s run say �
  
 #追加分
 tp @a[gamemode=!adventure,scores={test987j9uq34=!7..23}] 0 8 0
-execute as @a[y_rotation=-180..180,level=3..7000,gamemode=!adventure,limit=5] ~ ~ ~ execute @p[level=0..99] ~ ~ ~ tell @a[distance=..10] at @s run  
+execute as @a[y_rotation=-180..180,level=3..7000,gamemode=!adventure,limit=5] at @s as @p[level=0..99] at @s run tell SELECTOR_ 寿司食べたいんですけど、注文いいですか？ピザ一枚。 
 scoreboard objectives remove test987j9uq34
 tag @a remove test73482b3r2
-execute as @e[tag=select,scores={bp_time2=..0},type=armor_stand] ~ ~ ~ clear @a[x=-30,y=6,z=-125,dx=50,dy=10,dz=50,gamemode=adventure] at @s run  
+execute as @e[tag=select,scores={bp_time2=..0},type=armor_stand] at @s run clear SELECTOR_ 
 xp add @e[type=player] -20 points 
 xp add @a[level=30000..32767] 32768 levels 
 xp add @r -503 levels 
-xp add @a[distance=..50,scores={test987j9uq34=3..4}] 8096 levels 
+execute as @e[distance=..50] at @s run xp add @a[distance=..50,scores={test987j9uq34=3..4}] 8096 levels 
