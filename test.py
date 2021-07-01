@@ -233,6 +233,12 @@ def argument_convert(lineArg):
     print("引数変換後出力 = " + lineArg)
     return lineArg
 #####################################
+def Normal_convert(cmdLine):
+    print("通常コマンドの変換をおこないます。 --> " + cmdLine)
+    #convTypeを廃止して、通常コマンドはこの関数で処理する。引数はcmdLineのみ。
+    #executeコマンドの上にxpコマンドが乗っているとき変換できないためその改善策となる
+    return cmdLine
+#####################################
 def type_convert(cmdEnume,convType):
     TCmode = False
     if convType <= 0:
@@ -302,10 +308,14 @@ def type_convert(cmdEnume,convType):
         for i in range(0,len(separateExecute)):
             result += "as " + getSelList[i] + " at @s "
         executeResultCmd = executeResultCmd.replace('SELECTOR_',getSelList[len(getSelList)-1])
+        executeResultCmd = Normal_convert(executeResultCmd)
         result += "run " + executeResultCmd
 
     #convType=1はxpコマンドに対応
-    if convType == 2:
+    #だったが廃止しすべてNormal_convertに受け渡して判別し変換処理をおこなう
+    #セレクタを格納した配列をどう引き継ぐかを考える
+    if convType <= 2:
+        result = Normal_convert()
         result = 'xp add ' + getSelList[0]
         result += re.search(r'\s.?[0-9]+',cmdEnume).group(0)
         if cmdEnume.count('l ') == 1:
