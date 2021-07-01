@@ -99,9 +99,9 @@ execute @e[tag=select,scores={sn=140..150},type=armor_stand] ~ ~ ~ scoreboard pl
 #$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#
 #####メイン本回路 流れ制御
 execute @e[tag=select,scores={sn=1000..},type=armor_stand] ~ ~ ~ scoreboard players add @s sn 1
-execute @e[tag=select,scores={sn=1000..},type=armor_stand] ~ ~ ~ execute @a[x=-30,y=4,z=-125,dx=50,dy=1000,dz=50,m=a]
+#execute @e[tag=select,scores={sn=1000..},type=armor_stand] ~ ~ ~ execute @a[x=-30,y=4,z=-125,dx=50,dy=1000,dz=50,m=a]
 
-execute @e[tag=select,scores={sn=1000..},type=armor_stand] ~ ~ ~ xp 10 @a[x=-30,y=6,z=-125,dx=50,dy=1000,dz=50]
+execute @e[tag=select,scores={sn=1000..},type=armor_stand] ~ ~ ~ xp 10 @a[x=-30,y=6,z=-125,dx=50,dy=1000,dz=50,m=a]
 execute @e[tag=select,scores={sn=0..},type=armor_stand] ~ ~ ~ scoreboard players add @e[type=tnt] sn 1
 execute @e[tag=select,scores={sn=0..},type=armor_stand] ~ ~ ~ kill @e[type=tnt,scores={sn=5..}]
 execute @e[tag=select,scores={sn=1200..,players=0},type=armor_stand] ~ ~ ~ function azi/new.gameend.sytem
@@ -117,3 +117,5 @@ scoreboard players set "---------------------" ttr -30
 scoreboard players set "ごく一般的なTNTrunです。" ttr -31
 scoreboard players set "感圧版を踏むとTNTが着火し床が消えます" ttr -32
 scoreboard players set "岩盤の上に落ちないように生き延びてください" ttr -33
+
+execute @a[m=a] ~ ~ ~ say これは変換用サンプルテキストです。
