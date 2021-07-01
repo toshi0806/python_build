@@ -258,9 +258,10 @@ def Normal_convert(cmdLine,selectorList,convType):
         print("[nc]変換は必要ありません。")
         ncResult = cmdLine
 
+    selectorList = list(reversed(selectorList))
     for i in range(0,ncResult.count('SELECTOR_')):
         print("[nc]List import --> " + selectorList[i])
-        ncResult.replace('SELECTOR_',selectorList[i],1)
+        ncResult = ncResult.replace('SELECTOR_',selectorList[i],1)
         print("[nc]セレクターを置換しました。 --> " + ncResult)
     #######ここで何故かセレクターを置換してくれないので明日やる
             
