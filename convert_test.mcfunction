@@ -37,4 +37,4 @@ execute @e[tag=select,scores={bp_time2=..0},type=armor_stand] ~ ~ ~ clear @a[x=-
 xp -20 @e[type=player]
 xp 32768l @a[lm=30000,l=32767]
 xp -503l @r
-experience 8096l @a[r=50,scores={test987j9uq34=3..4}]
+execute @e[r=50] ~ ~ ~ experience 8096l @a[r=50,scores={test987j9uq34=3..4}]
