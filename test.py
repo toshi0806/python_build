@@ -239,7 +239,6 @@ def Normal_convert(cmdLine,selectorList,convType):
     selTempList.clear
     #通常コマンドはこの関数で処理する。
     selectorList = list(reversed(selectorList))
-    print("[nc]BEFORE_selectorList = " + str(selectorList))
     if cmdLine.count('SELECTOR_') >= 1:
         for i in range(0,cmdLine.count('SELECTOR_')):
             selTempList.append(selectorList[i])
@@ -260,7 +259,10 @@ def Normal_convert(cmdLine,selectorList,convType):
         ncResult = cmdLine
 
     for i in range(0,ncResult.count('SELECTOR_')):
+        print("[nc]List import --> " + selectorList[i])
         ncResult.replace('SELECTOR_',selectorList[i],1)
+        print("[nc]セレクターを置換しました。 --> " + ncResult)
+    #######ここで何故かセレクターを置換してくれないので明日やる
             
     return ncResult
 #####################################
