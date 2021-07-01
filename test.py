@@ -62,7 +62,7 @@ inText.write("#NEKOYAMA Converter " + str(dateText) + " converted\n")
 inText.close
 
 ALL_COMMAND = list()
-ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','tell ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
+ALL_COMMAND = ['clear ','clone ','difficulty ','effect ','enchant ','event ','xp ','experience ','fill ','fog ','function ','gamemode ','gamerule ','gametest ','getchunkdata ','getlocalplayername ','getspawnpoint ','give ','globalpause ','immutableworld ','kick ','kill ','list ','listd ','locate ','locatebiome ','me ','mobevent ','msg ','w ','music ','particle ','permission ','playanimation ','playsound ','querytarget ','reload ','replaceitem ','ride ','save ','say ','schedule ','scoreboard ','setblock ','setmaxplayers ','setworldspawn ','spawnpoint ','spreadplayers ','stop ','stopsound ','structure ','summon ','tag ','tp ','teleport ','tellraw ','tell ','testfor ','testforblock ','testforblocks ','tickingarea ','time ','title ','titleraw ','toggledownfall ','wb ','weather ','whitelist ','worldbuilder ','wsserver']
 ALL_COMMAND_CNT = len(ALL_COMMAND)
 
 ######################################
@@ -233,11 +233,36 @@ def argument_convert(lineArg):
     print("引数変換後出力 = " + lineArg)
     return lineArg
 #####################################
-def Normal_convert(cmdLine):
-    print("通常コマンドの変換をおこないます。 --> " + cmdLine)
-    #convTypeを廃止して、通常コマンドはこの関数で処理する。引数はcmdLineのみ。
-    #executeコマンドの上にxpコマンドが乗っているとき変換できないためその改善策となる
-    return cmdLine
+def Normal_convert(cmdLine,selectorList,convType):
+    print("[nc]通常コマンドの変換を実行 --> " + cmdLine)
+    selTempList = list()
+    selTempList.clear
+    #通常コマンドはこの関数で処理する。
+    selectorList = list(reversed(selectorList))
+    print("[nc]BEFORE_selectorList = " + str(selectorList))
+    if cmdLine.count('SELECTOR_') >= 1:
+        for i in range(0,cmdLine.count('SELECTOR_')):
+            selTempList.append(selectorList[i])
+        selectorList = selTempList
+    print("[nc]cmdLine = " + cmdLine + " / selectorList = " + str(selectorList))
+
+    if cmdLine.startswith("xp") or cmdLine.startswith("experience"):
+        print("[nc]xp/experienceコマンドを変換します。")
+        ncResult = 'xp add ' + selectorList[0]
+        ncResult += re.search(r'\s.?[0-9]+',cmdLine).group(0)
+        if cmdLine.count('l ') == 1:
+            cmdLine.replace('l ',' ')
+            ncResult += ' levels '
+        else:
+            ncResult += ' points '
+    else:
+        print("[nc]変換は必要ありません。")
+        ncResult = cmdLine
+
+    for i in range(0,ncResult.count('SELECTOR_')):
+        ncResult.replace('SELECTOR_',selectorList[i],1)
+            
+    return ncResult
 #####################################
 def type_convert(cmdEnume,convType):
     TCmode = False
@@ -252,6 +277,7 @@ def type_convert(cmdEnume,convType):
     tempSeparate = list()
     tempSeparate.clear()
 
+    #バラけてコマンドを分解するがcmdEnumeに返しセレクタはgetSelListに格納される
     tcSelectorCnt = tcSelectorCnt_afterSeparate = cmdEnume.count('@')
     while tcSelectorCnt_afterSeparate >= 2:
         tempSeparate.append(cmdEnume[cmdEnume.rfind('@'):])
@@ -259,11 +285,10 @@ def type_convert(cmdEnume,convType):
         tcSelectorCnt_afterSeparate = cmdEnume.count('@')
         if tcSelectorCnt_afterSeparate == 1:
             tempSeparate.append(cmdEnume)
-    tempSeparate = sorted(tempSeparate, reverse=True)
+    tempSeparate = list(reversed(tempSeparate))
     if tcSelectorCnt < 2:
         tempSeparate.append(cmdEnume)
     cmdEnume = ""
-
     print("tempSeparate = " + str(tempSeparate))
     for i in range(0,tcSelectorCnt):
         try:
@@ -280,6 +305,7 @@ def type_convert(cmdEnume,convType):
             tempSeparate[i] = tempSeparate[i].replace(getSelList[i],'SELECTOR_')
         cmdEnume += tempSeparate[i]
     print("type_convert / getSelList = " + str(getSelList) + " tcSelectorCnt = " + str(tcSelectorCnt) + "\ncmdEnume = " + str(cmdEnume))
+
 
     #convType=1はexecuteコマンドに対応
     if convType == 1:
@@ -307,22 +333,16 @@ def type_convert(cmdEnume,convType):
         result = "execute "
         for i in range(0,len(separateExecute)):
             result += "as " + getSelList[i] + " at @s "
-        executeResultCmd = executeResultCmd.replace('SELECTOR_',getSelList[len(getSelList)-1])
-        executeResultCmd = Normal_convert(executeResultCmd)
+        #executeResultCmd = executeResultCmd.replace('SELECTOR_',getSelList[len(getSelList)-1])
+        #convType == 1なら、SELECTOR_の数を検知して後ろからn番目を代入することにする
+        print("[type_convert]executeResultCmdを変換します。")
+        executeResultCmd = Normal_convert(executeResultCmd,getSelList,convType)
         result += "run " + executeResultCmd
-
     #convType=1はxpコマンドに対応
     #だったが廃止しすべてNormal_convertに受け渡して判別し変換処理をおこなう
-    #セレクタを格納した配列をどう引き継ぐかを考える
-    if convType <= 2:
-        result = Normal_convert()
-        result = 'xp add ' + getSelList[0]
-        result += re.search(r'\s.?[0-9]+',cmdEnume).group(0)
-        if cmdEnume.count('l ') == 1:
-            cmdEnume.replace('l ',' ')
-            result += ' levels '
-        else:
-            result += ' points '
+    elif convType >= 2:
+        print("[type_convert]cmdEnumeを変換します。")
+        result = Normal_convert(cmdEnume,getSelList,convType)
     else:
         print("[type_convert]変換は必要ありません。")
     print("type_convert / result = " + result)
